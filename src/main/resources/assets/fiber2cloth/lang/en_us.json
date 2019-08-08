@@ -1,0 +1,14 @@
+{
+  "error.fiber2cloth.when.casting": "Illegal Config Value",
+  "error.fiber2cloth.invaild.value": "Invaild Value",
+  "config.fiber2cloth.default.category": "Default",
+  "config.fiber2cloth.second.category": "Second",
+  "config.fiber2cloth.second.category.i.am.inside": "I am inside",
+  "config.fiber2cloth.second.category.i.am.inside.lol": "LOL",
+  "config.fiber2cloth.basicIntField": "Basic Int Field",
+  "config.fiber2cloth.nestedExample": "Nested Example",
+  "config.fiber2cloth.nestedNestedExample": "Nested Nested Example",
+  "config.fiber2cloth.nestedNestedList": "Nested Nested List",
+  "config.fiber2cloth.exampleBool": "Example Boolean",
+  "config.fiber2cloth.exampleBool.boolean.true": "yo this is true"
+}

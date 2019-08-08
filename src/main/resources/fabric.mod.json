@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "fiber2cloth",
+  "version": "${version}",
+  "name": "Fiber To Cloth",
+  "authors": [
+    "Danielshe"
+  ],
+  "license": "Unlicense",
+  "environment": "client",
+  "entrypoints": {
+    "modmenu": [
+      "me.shedaniel.fiber2cloth.ModMenuCompat"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.4.0"
+  }
+}
