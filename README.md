@@ -44,7 +44,7 @@ dependencies {
 - String[]
 ### API Usage
 This is the one line that will convert your config node into a cloth config screen.
-```
+```java
 Fiber2Cloth.create(screen, modid, configNode, configScreenTitleKey).setSaveRunnable(() -> {
     // Here you should serialise the node into the config file.
 }).build().getScreen();
