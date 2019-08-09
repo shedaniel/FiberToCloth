@@ -9,13 +9,12 @@ import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 import me.shedaniel.clothconfig2.gui.entries.SubCategoryListEntry;
 import me.shedaniel.fiber2cloth.api.Fiber2Cloth;
 import me.zeroeightsix.fiber.constraint.Constraint;
-import me.zeroeightsix.fiber.tree.ConfigLeaf;
-import me.zeroeightsix.fiber.tree.ConfigNode;
-import me.zeroeightsix.fiber.tree.ConfigValue;
+import me.zeroeightsix.fiber.tree.*;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resource.language.I18n;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class Fiber2ClothImpl implements Fiber2Cloth {
@@ -26,8 +25,10 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
     private String title;
     private ConfigNode node;
     private Map<Class, Function<ConfigValue, AbstractConfigListEntry>> functionMap = Maps.newHashMap();
+    private Map<Node, Function<Node, AbstractConfigListEntry>> nodeMap = Maps.newHashMap();
     private ConfigEntryBuilder configEntryBuilder = ConfigEntryBuilder.create();
     private Runnable saveRunnable;
+    private Consumer<Screen> afterInitConsumer = screen -> {};
     
     @Deprecated
     public Fiber2ClothImpl(Screen parentScreen, String modId, ConfigNode node, String title) {
@@ -70,14 +71,31 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
     }
     
     @Override
+    public Fiber2Cloth setAfterInitConsumer(Consumer<Screen> afterInitConsumer) {
+        this.afterInitConsumer = Objects.requireNonNull(afterInitConsumer);
+        return this;
+    }
+    
+    @Override
+    public Consumer<Screen> getAfterInitConsumer() {
+        return afterInitConsumer;
+    }
+    
+    @Override
     public Fiber2Cloth setSaveRunnable(Runnable saveRunnable) {
         this.saveRunnable = saveRunnable;
         return this;
     }
     
     @Override
-    public Fiber2Cloth registerConfigEntryFunction(Class clazz, Function function) {
-        functionMap.put(clazz, function);
+    public Fiber2Cloth registerNodeEntryFunction(Node node, Function function) {
+        nodeMap.put(node, function);
+        return this;
+    }
+    
+    @Override
+    public Fiber2Cloth registerNodeEntryFunction(Class clazz, Function function) {
+        functionMap.put(clazz, Objects.requireNonNull(function));
         return this;
     }
     
@@ -232,7 +250,7 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
             addNode(builder, getNode());
             if (saveRunnable != null)
                 builder.setSavingRunnable(saveRunnable);
-            Screen screen = builder.build();
+            Screen screen = builder.setAfterInitConsumer(afterInitConsumer).build();
             return new Result() {
                 @Override
                 public boolean isSuccessful() {
@@ -261,6 +279,16 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
     }
     
     public void addNode(ConfigBuilder builder, ConfigNode configNode) {
+        for(TreeItem item : Lists.newArrayList(configNode.getItems())) {
+            if (item instanceof Node) {
+                Node node = (Node) item;
+                if (nodeMap.containsKey(node)) {
+                    if (nodeMap.get(node) != null)
+                        builder.getOrCreateCategory(getDefaultCategoryKey()).addEntry(nodeMap.get(node).apply(node));
+                    configNode.getItems().remove(node);
+                }
+            }
+        }
         configNode.getItems().stream().filter(item -> item instanceof ConfigValue).map(item -> (ConfigValue) item).sorted(Comparator.comparing(ConfigLeaf::getName)).forEach(value -> {
             Class type = value.getType();
             if (functionMap.containsKey(type)) {
@@ -274,6 +302,16 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
     
     @SuppressWarnings("deprecation")
     public void addNodeFirstLayer(ConfigBuilder builder, ConfigCategory category, String categoryName, ConfigNode configNode) {
+        for(TreeItem item : Lists.newArrayList(configNode.getItems())) {
+            if (item instanceof Node) {
+                Node node = (Node) item;
+                if (nodeMap.containsKey(node)) {
+                    if (nodeMap.get(node) != null)
+                        category.addEntry(nodeMap.get(node).apply(node));
+                    configNode.getItems().remove(node);
+                }
+            }
+        }
         configNode.getItems().stream().filter(item -> item instanceof ConfigValue).map(item -> (ConfigValue) item).sorted(Comparator.comparing(ConfigLeaf::getName)).forEach(value -> {
             Class type = value.getType();
             if (functionMap.containsKey(type)) {
@@ -300,6 +338,19 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
     }
     
     public void addNodeSecondLayer(ConfigBuilder builder, SubCategoryListEntry subCategory, String categoryName, ConfigNode nestedNode) {
+        for(TreeItem item : Lists.newArrayList(nestedNode.getItems())) {
+            if (item instanceof Node) {
+                Node node = (Node) item;
+                if (nodeMap.containsKey(node)) {
+                    if (nodeMap.get(node) != null) {
+                        AbstractConfigListEntry entry = nodeMap.get(node).apply(node);
+                        subCategory.getValue().add(entry);
+                        ((List) subCategory.children()).add(entry);
+                    }
+                    nestedNode.getItems().remove(node);
+                }
+            }
+        }
         nestedNode.getItems().stream().filter(item -> item instanceof ConfigValue).map(item -> (ConfigValue) item).sorted(Comparator.comparing(ConfigLeaf::getName)).forEach(value -> {
             Class type = value.getType();
             if (functionMap.containsKey(type)) {

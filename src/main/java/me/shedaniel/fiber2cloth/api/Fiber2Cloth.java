@@ -2,12 +2,15 @@ package me.shedaniel.fiber2cloth.api;
 
 import me.shedaniel.fiber2cloth.impl.FakeFiber2Cloth;
 import me.zeroeightsix.fiber.tree.ConfigNode;
+import me.zeroeightsix.fiber.tree.ConfigValue;
+import me.zeroeightsix.fiber.tree.Node;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resource.language.I18n;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public interface Fiber2Cloth {
@@ -21,9 +24,20 @@ public interface Fiber2Cloth {
         }
     }
     
+    Fiber2Cloth setAfterInitConsumer(Consumer<Screen> afterInitConsumer);
+    
+    Consumer<Screen> getAfterInitConsumer();
+    
     Fiber2Cloth setSaveRunnable(Runnable saveRunnable);
     
-    Fiber2Cloth registerConfigEntryFunction(Class clazz, Function function);
+    Fiber2Cloth registerNodeEntryFunction(Node node, Function function);
+    
+    default Fiber2Cloth hideNode(Node node) {
+        registerNodeEntryFunction(node, null);
+        return this;
+    }
+    
+    Fiber2Cloth registerNodeEntryFunction(Class clazz, Function<ConfigValue, Object> function);
     
     Map<Class, Function> getFunctionMap();
     

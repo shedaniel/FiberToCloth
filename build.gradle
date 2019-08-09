@@ -1,9 +1,9 @@
 plugins {
-	id 'fabric-loom' version '0.2.5-SNAPSHOT'
-	id 'maven-publish'
-	id 'maven'
-	id 'signing'
-	id 'com.jfrog.bintray' version '1.8.4'
+    id 'fabric-loom' version '0.2.5-SNAPSHOT'
+    id 'maven-publish'
+    id 'maven'
+    id 'signing'
+    id 'com.jfrog.bintray' version '1.8.4'
 }
 
 sourceCompatibility = JavaVersion.VERSION_1_8
@@ -17,128 +17,128 @@ minecraft {
 }
 
 dependencies {
-	//to change the versions see the gradle.properties file
-	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings "net.fabricmc:yarn:${project.yarn_mappings}"
-	modApi "net.fabricmc:fabric-loader:${project.loader_version}"
+    //to change the versions see the gradle.properties file
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings "net.fabricmc:yarn:${project.yarn_mappings}"
+    modApi "net.fabricmc:fabric-loader:${project.loader_version}"
 
-	// Fabric API. This is technically optional, but you probably want it anyway.
-	modApi "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-	modApi ("me.shedaniel.cloth:config-2:0.5.2") {
-		exclude group: "net.fabricmc.fabric-api"
-	}
-	modApi "me.zeroeightsix:fiber:0.6.0-7"
+    // Fabric API. This is technically optional, but you probably want it anyway.
+    modApi "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    modApi ("me.shedaniel.cloth:config-2:0.5.2") {
+        exclude group: "net.fabricmc.fabric-api"
+    }
+    modApi "me.zeroeightsix:fiber:0.6.0-7"
 
-	// PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
-	// You may need to force-disable transitiveness on them.
+    // PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
+    // You may need to force-disable transitiveness on them.
 }
 
 processResources {
-	inputs.property "version", project.version
+    inputs.property "version", project.version
 
-	from(sourceSets.main.resources.srcDirs) {
-		include "fabric.mod.json"
-		expand "version": project.version
-	}
+    from(sourceSets.main.resources.srcDirs) {
+        include "fabric.mod.json"
+        expand "version": project.version
+    }
 
-	from(sourceSets.main.resources.srcDirs) {
-		exclude "fabric.mod.json"
-	}
+    from(sourceSets.main.resources.srcDirs) {
+        exclude "fabric.mod.json"
+    }
 }
 
 // ensure that the encoding is set to UTF-8, no matter what the system default is
 // this fixes some edge cases with special characters not displaying correctly
 // see http://yodaconditions.net/blog/fix-for-java-file-encoding-problems-with-gradle.html
 tasks.withType(JavaCompile) {
-	options.encoding = "UTF-8"
+    options.encoding = "UTF-8"
 }
 
 jar {
-	from "LICENSE"
+    from "LICENSE"
 }
 
 bintray {
-	user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
-	key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_KEY')
-	publications = ["MyPublication"]
-	override = true
-	pkg {
-		repo = "fiber2cloth"
-		name = "fiber2cloth"
-		userOrg = "shedaniel"
-		licenses = ["Unlicense"]
-		version {
-			name = project.version
-			vcsTag = project.version
-			released = new Date()
-			desc = "Fiber 2 Cloth API for Minecraft"
-			githubRepo = 'shedaniel/FiberToCloth'
-			websiteUrl = 'https://github.com/shedaniel/FiberToCloth'
-			issueTrackerUrl = 'https://github.com/shedaniel/FiberToCloth/issues'
-			vcsUrl = 'https://github.com/shedaniel/FiberToCloth.git'
-			gpg {
-				sign = true
-			}
-		}
-	}
+    user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
+    key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_KEY')
+    publications = ["MyPublication"]
+    override = true
+    pkg {
+        repo = "fiber2cloth"
+        name = "fiber2cloth"
+        userOrg = "shedaniel"
+        licenses = ["Unlicense"]
+        version {
+            name = project.version
+            vcsTag = project.version
+            released = new Date()
+            desc = "Fiber 2 Cloth API for Minecraft"
+            githubRepo = 'shedaniel/FiberToCloth'
+            websiteUrl = 'https://github.com/shedaniel/FiberToCloth'
+            issueTrackerUrl = 'https://github.com/shedaniel/FiberToCloth/issues'
+            vcsUrl = 'https://github.com/shedaniel/FiberToCloth.git'
+            gpg {
+                sign = true
+            }
+        }
+    }
 }
 
 // Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
 // if it is present.
 // If you remove this task, sources will not be generated.
 task sourcesJar(type: Jar, dependsOn: classes) {
-	classifier = 'sources'
-	from sourceSets.main.allSource
+    classifier = 'sources'
+    from sourceSets.main.allSource
 }
 
 task javadocs(type: Javadoc) {
-	source = sourceSets.main.allJava
+    source = sourceSets.main.allJava
 }
 
 task javadocsJar(type: Jar, dependsOn: javadocs) {
-	classifier = "javadocs"
-	from javadocs.destinationDir
+    classifier = "javadocs"
+    from javadocs.destinationDir
 }
 
 publishing {
-	publications {
-		MyPublication(MavenPublication) {
-			artifact(file("${project.buildDir}/libs/${project.archivesBaseName}-${project.version}.jar")) {
-				builtBy remapJar
-			}
-			artifact(sourcesJar) {
-				builtBy remapSourcesJar
-			}
-			artifact javadocsJar
-			groupId 'me.shedaniel.cloth'
-			artifactId 'fiber2cloth'
-			version = project.version
-			pom.withXml {
-				def root = asNode()
-				root.appendNode('description', 'Fiber 2 Cloth API for Minecraft')
-				root.appendNode('name', 'fiber2cloth')
-				root.appendNode('url', 'https://github.com/shedaniel/FiberToCloth')
-				root.appendNode('packaging', 'jar')
-				def license = root.appendNode('licenses').appendNode('license')
-				license.appendNode('name', 'Unlicense')
-				license.appendNode('url', 'http://unlicense.org')
-				license.appendNode('distribution', 'repo')
-				def developers = root.appendNode('developers')
-				def shedaniel = developers.appendNode('developer')
-				shedaniel.appendNode('id', 'shedaniel')
-				shedaniel.appendNode('name', 'shedaniel')
-				shedaniel.appendNode('email', 'daniel@shedaniel.me')
-				def scm = root.appendNode('scm')
-				scm.appendNode('url', "https://github.com/shedaniel/FiberToCloth")
-				scm.appendNode('connection', "scm:git:git://github.com/shedaniel/FiberToCloth.git")
-				scm.appendNode('developerConnection', "scm:git:ssh://github.com:shedaniel/FiberToCloth.git")
-			}
-		}
-	}
+    publications {
+        MyPublication(MavenPublication) {
+            artifact(file("${project.buildDir}/libs/${project.archivesBaseName}-${project.version}.jar")) {
+                builtBy remapJar
+            }
+            artifact(sourcesJar) {
+                builtBy remapSourcesJar
+            }
+            artifact javadocsJar
+            groupId 'me.shedaniel.cloth'
+            artifactId 'fiber2cloth'
+            version = project.version
+            pom.withXml {
+                def root = asNode()
+                root.appendNode('description', 'Fiber 2 Cloth API for Minecraft')
+                root.appendNode('name', 'fiber2cloth')
+                root.appendNode('url', 'https://github.com/shedaniel/FiberToCloth')
+                root.appendNode('packaging', 'jar')
+                def license = root.appendNode('licenses').appendNode('license')
+                license.appendNode('name', 'Unlicense')
+                license.appendNode('url', 'http://unlicense.org')
+                license.appendNode('distribution', 'repo')
+                def developers = root.appendNode('developers')
+                def shedaniel = developers.appendNode('developer')
+                shedaniel.appendNode('id', 'shedaniel')
+                shedaniel.appendNode('name', 'shedaniel')
+                shedaniel.appendNode('email', 'daniel@shedaniel.me')
+                def scm = root.appendNode('scm')
+                scm.appendNode('url', "https://github.com/shedaniel/FiberToCloth")
+                scm.appendNode('connection', "scm:git:git://github.com/shedaniel/FiberToCloth.git")
+                scm.appendNode('developerConnection', "scm:git:ssh://github.com:shedaniel/FiberToCloth.git")
+            }
+        }
+    }
 
-	// select the repositories you want to publish to
-	repositories {
-		// uncomment to publish to the local maven
-		// mavenLocal()
-	}
+    // select the repositories you want to publish to
+    repositories {
+        // uncomment to publish to the local maven
+        // mavenLocal()
+    }
 }
