@@ -24,7 +24,7 @@ dependencies {
 
     // Fabric API. This is technically optional, but you probably want it anyway.
     modApi "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-    modApi ("me.shedaniel.cloth:config-2:0.5.2") {
+    modApi ("me.shedaniel.cloth:config-2:1.1.1") {
         exclude group: "net.fabricmc.fabric-api"
     }
     modApi "me.zeroeightsix:fiber:0.6.0-7"

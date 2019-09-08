@@ -19,7 +19,9 @@ public class ModMenuCompat implements ModMenuApi {
     @Override
     public Function<Screen, ? extends Screen> getConfigScreenFactory() {
         ConfigNode node = new ConfigNode();
+        Node secondCategory = null;
         try {
+            secondCategory = node.fork("second.category");
             ConfigValue<Integer> basicIntField = ConfigValue.builder(Integer.class)
                     .withName("basicIntField")
                     .withComment("This field will accept 0 - 100.")
@@ -30,7 +32,6 @@ public class ModMenuCompat implements ModMenuApi {
                     .maxNumerical(100)
                     .finish()
                     .build();
-            Node secondCategory = node.fork("second.category");
             ConfigValue<String> nestedExample = ConfigValue.builder(String.class)
                     .withName("nestedExample")
                     .withParent(secondCategory)
@@ -57,7 +58,8 @@ public class ModMenuCompat implements ModMenuApi {
         } catch (FiberException e) {
             e.printStackTrace();
         }
-        return screen -> Fiber2Cloth.create(screen, getModId(), node, "Fiber2Cloth Example Config").setSaveRunnable(() -> {
+        Node finalSecondCategory = secondCategory;
+        return screen -> Fiber2Cloth.create(screen, getModId(), node, "Fiber2Cloth Example Config").setDefaultCategoryNode(finalSecondCategory).setSaveRunnable(() -> {
             // Here you should serialise the node into the config file.
         }).build().getScreen();
     }

@@ -4,6 +4,7 @@ import com.google.common.collect.Maps;
 import me.shedaniel.fiber2cloth.api.Fiber2Cloth;
 import me.zeroeightsix.fiber.tree.ConfigNode;
 import me.zeroeightsix.fiber.tree.Node;
+import me.zeroeightsix.fiber.tree.TreeItem;
 import net.minecraft.client.gui.screen.Screen;
 
 import java.util.Map;
@@ -34,12 +35,22 @@ public class FakeFiber2Cloth implements Fiber2Cloth {
     }
     
     @Override
+    public Fiber2Cloth setDefaultCategoryNode(Node defaultCategoryNode) {
+        return this;
+    }
+    
+    @Override
+    public Node getDefaultCategoryNode() {
+        return node;
+    }
+    
+    @Override
     public Fiber2Cloth setSaveRunnable(Runnable saveRunnable) {
         return this;
     }
     
     @Override
-    public Fiber2Cloth registerNodeEntryFunction(Node node, Function function) {
+    public Fiber2Cloth registerTreeEntryFunction(TreeItem item, Function function) {
         return this;
     }
     

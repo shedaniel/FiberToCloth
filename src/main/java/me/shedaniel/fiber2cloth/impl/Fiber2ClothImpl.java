@@ -24,8 +24,9 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
     private String defaultCategory = "config.fiber2cloth.default.category";
     private String title;
     private ConfigNode node;
+    private Node defaultCategoryNode;
     private Map<Class, Function<ConfigValue, AbstractConfigListEntry>> functionMap = Maps.newHashMap();
-    private Map<Node, Function<Node, AbstractConfigListEntry>> nodeMap = Maps.newHashMap();
+    private Map<TreeItem, Function<TreeItem, AbstractConfigListEntry>> treeEntryMap = Maps.newHashMap();
     private ConfigEntryBuilder configEntryBuilder = ConfigEntryBuilder.create();
     private Runnable saveRunnable;
     private Consumer<Screen> afterInitConsumer = screen -> {};
@@ -34,6 +35,7 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
     public Fiber2ClothImpl(Screen parentScreen, String modId, ConfigNode node, String title) {
         this.parentScreen = parentScreen;
         this.node = node;
+        this.defaultCategoryNode = node;
         this.modId = modId;
         this.title = title;
         initDefaultFunctionMap();
@@ -71,6 +73,19 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
     }
     
     @Override
+    public Fiber2Cloth setDefaultCategoryNode(Node defaultCategoryNode) {
+        if (!node.getItems().contains(defaultCategoryNode))
+            throw new IllegalArgumentException("The default category node must be on the first level!");
+        this.defaultCategoryNode = Objects.requireNonNull(defaultCategoryNode);
+        return this;
+    }
+    
+    @Override
+    public Node getDefaultCategoryNode() {
+        return defaultCategoryNode;
+    }
+    
+    @Override
     public Fiber2Cloth setAfterInitConsumer(Consumer<Screen> afterInitConsumer) {
         this.afterInitConsumer = Objects.requireNonNull(afterInitConsumer);
         return this;
@@ -88,8 +103,8 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
     }
     
     @Override
-    public Fiber2Cloth registerNodeEntryFunction(Node node, Function function) {
-        nodeMap.put(node, function);
+    public Fiber2Cloth registerTreeEntryFunction(TreeItem node, Function function) {
+        treeEntryMap.put(node, function);
         return this;
     }
     
@@ -248,6 +263,25 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
         try {
             ConfigBuilder builder = ConfigBuilder.create().setTitle(getTitle()).setParentScreen(getParentScreen());
             addNode(builder, getNode());
+            String defaultS = defaultCategoryNode == node ? getDefaultCategoryKey() : "config." + modId + "." + defaultCategoryNode.getName();
+            if (builder.hasCategory(defaultS)) {
+                builder.setFallbackCategory(builder.getOrCreateCategory(defaultS));
+            } else try {
+                throw new IllegalStateException("Illegal default config category!");
+            } catch (IllegalStateException e) {
+                e.printStackTrace();
+                return new Result() {
+                    @Override
+                    public boolean isSuccessful() {
+                        return false;
+                    }
+                    
+                    @Override
+                    public Screen getScreen() {
+                        return null;
+                    }
+                };
+            }
             if (saveRunnable != null)
                 builder.setSavingRunnable(saveRunnable);
             Screen screen = builder.setAfterInitConsumer(afterInitConsumer).build();
@@ -279,46 +313,60 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
     }
     
     public void addNode(ConfigBuilder builder, ConfigNode configNode) {
-        for(TreeItem item : Lists.newArrayList(configNode.getItems())) {
-            if (item instanceof Node) {
-                Node node = (Node) item;
-                if (nodeMap.containsKey(node)) {
-                    if (nodeMap.get(node) != null)
-                        builder.getOrCreateCategory(getDefaultCategoryKey()).addEntry(nodeMap.get(node).apply(node));
-                    configNode.getItems().remove(node);
+        List<TreeItem> items = Lists.newArrayList(configNode.getItems());
+        {
+            List<TreeItem> toRemove = Lists.newArrayList();
+            for(TreeItem item : items) {
+                if (treeEntryMap.containsKey(item)) {
+                    if (treeEntryMap.get(item) != null)
+                        builder.getOrCreateCategory(getDefaultCategoryKey()).addEntry(treeEntryMap.get(item).apply(item));
+                    toRemove.add(item);
                 }
             }
+            items.removeAll(toRemove);
         }
-        configNode.getItems().stream().filter(item -> item instanceof ConfigValue).map(item -> (ConfigValue) item).sorted(Comparator.comparing(ConfigLeaf::getName)).forEach(value -> {
-            Class type = value.getType();
-            if (functionMap.containsKey(type)) {
-                builder.getOrCreateCategory(getDefaultCategoryKey()).addEntry(functionMap.get(type).apply(value));
-            }
-        });
-        configNode.getItems().stream().filter(item -> item instanceof ConfigNode).map(item -> (ConfigNode) item).sorted(Comparator.comparing(ConfigLeaf::getName)).forEach(node -> {
+        {
+            List<TreeItem> toRemove = Lists.newArrayList();
+            items.stream().filter(item -> item instanceof ConfigValue).map(item -> (ConfigValue) item).sorted(Comparator.comparing(ConfigLeaf::getName)).forEach(value -> {
+                Class type = value.getType();
+                if (functionMap.containsKey(type)) {
+                    builder.getOrCreateCategory(getDefaultCategoryKey()).addEntry(functionMap.get(type).apply(value));
+                    toRemove.add(value);
+                }
+            });
+            items.removeAll(toRemove);
+        }
+        items.stream().filter(item -> item instanceof ConfigNode).map(item -> (ConfigNode) item).sorted(Comparator.comparing(ConfigLeaf::getName)).forEach(node -> {
             addNodeFirstLayer(builder, builder.getOrCreateCategory("config." + modId + "." + node.getName()), node.getName(), node);
         });
     }
     
     @SuppressWarnings("deprecation")
     public void addNodeFirstLayer(ConfigBuilder builder, ConfigCategory category, String categoryName, ConfigNode configNode) {
-        for(TreeItem item : Lists.newArrayList(configNode.getItems())) {
-            if (item instanceof Node) {
-                Node node = (Node) item;
-                if (nodeMap.containsKey(node)) {
-                    if (nodeMap.get(node) != null)
-                        category.addEntry(nodeMap.get(node).apply(node));
-                    configNode.getItems().remove(node);
+        List<TreeItem> items = Lists.newArrayList(configNode.getItems());
+        {
+            List<TreeItem> toRemove = Lists.newArrayList();
+            for(TreeItem item : items) {
+                if (treeEntryMap.containsKey(item)) {
+                    if (treeEntryMap.get(item) != null)
+                        category.addEntry(treeEntryMap.get(item).apply(item));
+                    toRemove.add(item);
                 }
             }
+            items.removeAll(toRemove);
         }
-        configNode.getItems().stream().filter(item -> item instanceof ConfigValue).map(item -> (ConfigValue) item).sorted(Comparator.comparing(ConfigLeaf::getName)).forEach(value -> {
-            Class type = value.getType();
-            if (functionMap.containsKey(type)) {
-                category.addEntry(functionMap.get(type).apply(value));
-            }
-        });
-        configNode.getItems().stream().filter(item -> item instanceof ConfigNode).map(item -> (ConfigNode) item).sorted(Comparator.comparing(ConfigLeaf::getName)).forEach(nestedNode -> {
+        {
+            List<TreeItem> toRemove = Lists.newArrayList();
+            items.stream().filter(item -> item instanceof ConfigValue).map(item -> (ConfigValue) item).sorted(Comparator.comparing(ConfigLeaf::getName)).forEach(value -> {
+                Class type = value.getType();
+                if (functionMap.containsKey(type)) {
+                    category.addEntry(functionMap.get(type).apply(value));
+                    toRemove.add(value);
+                }
+            });
+            items.removeAll(toRemove);
+        }
+        items.stream().filter(item -> item instanceof ConfigNode).map(item -> (ConfigNode) item).sorted(Comparator.comparing(ConfigLeaf::getName)).forEach(nestedNode -> {
             String s = "config." + modId + "." + categoryName + "." + nestedNode.getName();
             SubCategoryListEntry entry = null;
             for(Object o : category.getEntries()) {
@@ -338,28 +386,35 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
     }
     
     public void addNodeSecondLayer(ConfigBuilder builder, SubCategoryListEntry subCategory, String categoryName, ConfigNode nestedNode) {
-        for(TreeItem item : Lists.newArrayList(nestedNode.getItems())) {
-            if (item instanceof Node) {
-                Node node = (Node) item;
-                if (nodeMap.containsKey(node)) {
-                    if (nodeMap.get(node) != null) {
-                        AbstractConfigListEntry entry = nodeMap.get(node).apply(node);
+        List<TreeItem> items = Lists.newArrayList(nestedNode.getItems());
+        {
+            List<TreeItem> toRemove = Lists.newArrayList();
+            for(TreeItem item : items) {
+                if (treeEntryMap.containsKey(item)) {
+                    if (treeEntryMap.get(item) != null) {
+                        AbstractConfigListEntry entry = treeEntryMap.get(item).apply(item);
                         subCategory.getValue().add(entry);
                         ((List) subCategory.children()).add(entry);
                     }
-                    nestedNode.getItems().remove(node);
+                    toRemove.add(item);
                 }
             }
+            items.removeAll(toRemove);
         }
-        nestedNode.getItems().stream().filter(item -> item instanceof ConfigValue).map(item -> (ConfigValue) item).sorted(Comparator.comparing(ConfigLeaf::getName)).forEach(value -> {
-            Class type = value.getType();
-            if (functionMap.containsKey(type)) {
-                AbstractConfigListEntry entry = functionMap.get(type).apply(value);
-                subCategory.getValue().add(entry);
-                ((List) subCategory.children()).add(entry);
-            }
-        });
-        nestedNode.getItems().stream().filter(item -> item instanceof ConfigNode).map(item -> (ConfigNode) item).sorted(Comparator.comparing(ConfigLeaf::getName)).forEach(nestedNestedNode -> {
+        {
+            List<TreeItem> toRemove = Lists.newArrayList();
+            items.stream().filter(item -> item instanceof ConfigValue).map(item -> (ConfigValue) item).sorted(Comparator.comparing(ConfigLeaf::getName)).forEach(value -> {
+                Class type = value.getType();
+                if (functionMap.containsKey(type)) {
+                    AbstractConfigListEntry entry = functionMap.get(type).apply(value);
+                    subCategory.getValue().add(entry);
+                    ((List) subCategory.children()).add(entry);
+                    toRemove.add(value);
+                }
+            });
+            items.removeAll(toRemove);
+        }
+        items.stream().filter(item -> item instanceof ConfigNode).map(item -> (ConfigNode) item).sorted(Comparator.comparing(ConfigLeaf::getName)).forEach(nestedNestedNode -> {
             String s = "config." + modId + "." + categoryName + "." + nestedNestedNode.getName();
             SubCategoryListEntry entry = null;
             for(AbstractConfigListEntry o : subCategory.getValue()) {

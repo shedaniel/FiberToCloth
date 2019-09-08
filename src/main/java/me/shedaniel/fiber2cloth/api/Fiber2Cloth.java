@@ -4,6 +4,7 @@ import me.shedaniel.fiber2cloth.impl.FakeFiber2Cloth;
 import me.zeroeightsix.fiber.tree.ConfigNode;
 import me.zeroeightsix.fiber.tree.ConfigValue;
 import me.zeroeightsix.fiber.tree.Node;
+import me.zeroeightsix.fiber.tree.TreeItem;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resource.language.I18n;
 
@@ -24,18 +25,32 @@ public interface Fiber2Cloth {
         }
     }
     
+    Consumer<Screen> getAfterInitConsumer();
+    
     Fiber2Cloth setAfterInitConsumer(Consumer<Screen> afterInitConsumer);
     
-    Consumer<Screen> getAfterInitConsumer();
+    Node getDefaultCategoryNode();
+    
+    Fiber2Cloth setDefaultCategoryNode(Node defaultCategoryNode);
     
     Fiber2Cloth setSaveRunnable(Runnable saveRunnable);
     
-    Fiber2Cloth registerNodeEntryFunction(Node node, Function function);
-    
-    default Fiber2Cloth hideNode(Node node) {
-        registerNodeEntryFunction(node, null);
+    default Fiber2Cloth registerNodeEntryFunction(Node node, Function function) {
+        registerTreeEntryFunction(node, function);
         return this;
     }
+    
+    default Fiber2Cloth hideNode(Node node) {
+        hideTreeEntry(node);
+        return this;
+    }
+    
+    default Fiber2Cloth hideTreeEntry(TreeItem item) {
+        registerTreeEntryFunction(item, null);
+        return this;
+    }
+    
+    Fiber2Cloth registerTreeEntryFunction(TreeItem item, Function function);
     
     Fiber2Cloth registerNodeEntryFunction(Class clazz, Function<ConfigValue, Object> function);
     
