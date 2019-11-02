@@ -121,108 +121,47 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
     
     public void initDefaultFunctionMap() {
         functionMap.put(Integer.class, configValue -> {
-            return configEntryBuilder.startIntField("config." + modId + "." + configValue.getName(), (int) configValue.getValue())
-                    .setDefaultValue(cast(configValue.getDefaultValue(), Integer.class))
-                    .setTooltip(splitLine(configValue.getComment()))
-                    .setSaveConsumer(var -> configValue.setValue(var))
-                    .setErrorSupplier(var -> error(configValue.getConstraints(), var, Integer.class))
-                    .build();
+            return configEntryBuilder.startIntField("config." + modId + "." + configValue.getName(), (int) configValue.getValue()).setDefaultValue(cast(configValue.getDefaultValue(), Integer.class)).setTooltip(splitLine(configValue.getComment())).setSaveConsumer(var -> configValue.setValue(var)).setErrorSupplier(var -> error(configValue.getConstraints(), var, Integer.class)).build();
         });
         functionMap.put(int.class, functionMap.get(Integer.class));
         functionMap.put(Long.class, configValue -> {
-            return configEntryBuilder.startLongField("config." + modId + "." + configValue.getName(), (long) configValue.getValue())
-                    .setDefaultValue(cast(configValue.getDefaultValue(), Long.class))
-                    .setTooltip(splitLine(configValue.getComment()))
-                    .setSaveConsumer(var -> configValue.setValue(var))
-                    .setErrorSupplier(var -> error(configValue.getConstraints(), var, Long.class))
-                    .build();
+            return configEntryBuilder.startLongField("config." + modId + "." + configValue.getName(), (long) configValue.getValue()).setDefaultValue(cast(configValue.getDefaultValue(), Long.class)).setTooltip(splitLine(configValue.getComment())).setSaveConsumer(var -> configValue.setValue(var)).setErrorSupplier(var -> error(configValue.getConstraints(), var, Long.class)).build();
         });
         functionMap.put(long.class, functionMap.get(Long.class));
         functionMap.put(Double.class, configValue -> {
-            return configEntryBuilder.startDoubleField("config." + modId + "." + configValue.getName(), (double) configValue.getValue())
-                    .setDefaultValue(cast(configValue.getDefaultValue(), Double.class))
-                    .setTooltip(splitLine(configValue.getComment()))
-                    .setSaveConsumer(var -> configValue.setValue(var))
-                    .setErrorSupplier(var -> error(configValue.getConstraints(), var, Double.class))
-                    .build();
+            return configEntryBuilder.startDoubleField("config." + modId + "." + configValue.getName(), (double) configValue.getValue()).setDefaultValue(cast(configValue.getDefaultValue(), Double.class)).setTooltip(splitLine(configValue.getComment())).setSaveConsumer(var -> configValue.setValue(var)).setErrorSupplier(var -> error(configValue.getConstraints(), var, Double.class)).build();
         });
         functionMap.put(double.class, functionMap.get(Double.class));
         functionMap.put(Float.class, configValue -> {
-            return configEntryBuilder.startFloatField("config." + modId + "." + configValue.getName(), (float) configValue.getValue())
-                    .setDefaultValue(cast(configValue.getDefaultValue(), Float.class))
-                    .setTooltip(splitLine(configValue.getComment()))
-                    .setSaveConsumer(var -> configValue.setValue(var))
-                    .setErrorSupplier(var -> error(configValue.getConstraints(), var, Float.class))
-                    .build();
+            return configEntryBuilder.startFloatField("config." + modId + "." + configValue.getName(), (float) configValue.getValue()).setDefaultValue(cast(configValue.getDefaultValue(), Float.class)).setTooltip(splitLine(configValue.getComment())).setSaveConsumer(var -> configValue.setValue(var)).setErrorSupplier(var -> error(configValue.getConstraints(), var, Float.class)).build();
         });
         functionMap.put(float.class, functionMap.get(Float.class));
         functionMap.put(Boolean.class, configValue -> {
             String s = "config." + modId + "." + configValue.getName();
-            return configEntryBuilder.startBooleanToggle(s, (boolean) configValue.getValue())
-                    .setDefaultValue(cast(configValue.getDefaultValue(), Boolean.class))
-                    .setTooltip(splitLine(configValue.getComment()))
-                    .setSaveConsumer(var -> configValue.setValue(var))
-                    .setErrorSupplier(var -> error(configValue.getConstraints(), var, Boolean.class))
-                    .setYesNoTextSupplier(bool -> {
-                        if (I18n.hasTranslation(s + ".boolean." + bool))
-                            return I18n.translate(s + ".boolean." + bool);
-                        return bool ? "§aYes" : "§cNo";
-                    })
-                    .build();
+            return configEntryBuilder.startBooleanToggle(s, (boolean) configValue.getValue()).setDefaultValue(cast(configValue.getDefaultValue(), Boolean.class)).setTooltip(splitLine(configValue.getComment())).setSaveConsumer(var -> configValue.setValue(var)).setErrorSupplier(var -> error(configValue.getConstraints(), var, Boolean.class)).setYesNoTextSupplier(bool -> {
+                if (I18n.hasTranslation(s + ".boolean." + bool))
+                    return I18n.translate(s + ".boolean." + bool);
+                return bool ? "§aYes" : "§cNo";
+            }).build();
         });
         functionMap.put(boolean.class, functionMap.get(Boolean.class));
         functionMap.put(String.class, configValue -> {
-            return configEntryBuilder.startStrField("config." + modId + "." + configValue.getName(), (String) configValue.getValue())
-                    .setDefaultValue(cast(configValue.getDefaultValue(), String.class))
-                    .setTooltip(splitLine(configValue.getComment()))
-                    .setSaveConsumer(var -> configValue.setValue(var))
-                    .setErrorSupplier(var -> error(configValue.getConstraints(), var, String.class))
-                    .build();
+            return configEntryBuilder.startStrField("config." + modId + "." + configValue.getName(), (String) configValue.getValue()).setDefaultValue(cast(configValue.getDefaultValue(), String.class)).setTooltip(splitLine(configValue.getComment())).setSaveConsumer(var -> configValue.setValue(var)).setErrorSupplier(var -> error(configValue.getConstraints(), var, String.class)).build();
         });
         functionMap.put(Integer[].class, configValue -> {
-            return configEntryBuilder.startIntList("config." + modId + "." + configValue.getName(), Lists.newArrayList((Integer[]) configValue.getValue()))
-                    .setDefaultValue(list(cast(configValue.getDefaultValue(), Integer[].class)))
-                    .setTooltip(splitLine(configValue.getComment()))
-                    .setExpended(true)
-                    .setSaveConsumer(var -> configValue.setValue(var.toArray(new Integer[0])))
-                    .setErrorSupplier(var -> error(configValue.getConstraints(), var.toArray(new Integer[0]), Integer[].class))
-                    .build();
+            return configEntryBuilder.startIntList("config." + modId + "." + configValue.getName(), Lists.newArrayList((Integer[]) configValue.getValue())).setDefaultValue(list(cast(configValue.getDefaultValue(), Integer[].class))).setTooltip(splitLine(configValue.getComment())).setExpended(true).setSaveConsumer(var -> configValue.setValue(var.toArray(new Integer[0]))).setErrorSupplier(var -> error(configValue.getConstraints(), var.toArray(new Integer[0]), Integer[].class)).build();
         });
         functionMap.put(Long[].class, configValue -> {
-            return configEntryBuilder.startLongList("config." + modId + "." + configValue.getName(), Lists.newArrayList((Long[]) configValue.getValue()))
-                    .setDefaultValue(list(cast(configValue.getDefaultValue(), Long[].class)))
-                    .setTooltip(splitLine(configValue.getComment()))
-                    .setExpended(true)
-                    .setSaveConsumer(var -> configValue.setValue(var.toArray(new Long[0])))
-                    .setErrorSupplier(var -> error(configValue.getConstraints(), var.toArray(new Long[0]), Long[].class))
-                    .build();
+            return configEntryBuilder.startLongList("config." + modId + "." + configValue.getName(), Lists.newArrayList((Long[]) configValue.getValue())).setDefaultValue(list(cast(configValue.getDefaultValue(), Long[].class))).setTooltip(splitLine(configValue.getComment())).setExpended(true).setSaveConsumer(var -> configValue.setValue(var.toArray(new Long[0]))).setErrorSupplier(var -> error(configValue.getConstraints(), var.toArray(new Long[0]), Long[].class)).build();
         });
         functionMap.put(Double[].class, configValue -> {
-            return configEntryBuilder.startDoubleList("config." + modId + "." + configValue.getName(), Lists.newArrayList((Double[]) configValue.getValue()))
-                    .setDefaultValue(list(cast(configValue.getDefaultValue(), Double[].class)))
-                    .setTooltip(splitLine(configValue.getComment()))
-                    .setExpended(true)
-                    .setSaveConsumer(var -> configValue.setValue(var.toArray(new Double[0])))
-                    .setErrorSupplier(var -> error(configValue.getConstraints(), var.toArray(new Double[0]), Double[].class))
-                    .build();
+            return configEntryBuilder.startDoubleList("config." + modId + "." + configValue.getName(), Lists.newArrayList((Double[]) configValue.getValue())).setDefaultValue(list(cast(configValue.getDefaultValue(), Double[].class))).setTooltip(splitLine(configValue.getComment())).setExpended(true).setSaveConsumer(var -> configValue.setValue(var.toArray(new Double[0]))).setErrorSupplier(var -> error(configValue.getConstraints(), var.toArray(new Double[0]), Double[].class)).build();
         });
         functionMap.put(Float[].class, configValue -> {
-            return configEntryBuilder.startFloatList("config." + modId + "." + configValue.getName(), Lists.newArrayList((Float[]) configValue.getValue()))
-                    .setDefaultValue(list(cast(configValue.getDefaultValue(), Float[].class)))
-                    .setTooltip(splitLine(configValue.getComment()))
-                    .setExpended(true)
-                    .setSaveConsumer(var -> configValue.setValue(var.toArray(new Float[0])))
-                    .setErrorSupplier(var -> error(configValue.getConstraints(), var.toArray(new Float[0]), Float[].class))
-                    .build();
+            return configEntryBuilder.startFloatList("config." + modId + "." + configValue.getName(), Lists.newArrayList((Float[]) configValue.getValue())).setDefaultValue(list(cast(configValue.getDefaultValue(), Float[].class))).setTooltip(splitLine(configValue.getComment())).setExpended(true).setSaveConsumer(var -> configValue.setValue(var.toArray(new Float[0]))).setErrorSupplier(var -> error(configValue.getConstraints(), var.toArray(new Float[0]), Float[].class)).build();
         });
         functionMap.put(String[].class, configValue -> {
-            return configEntryBuilder.startStrList("config." + modId + "." + configValue.getName(), Lists.newArrayList((String[]) configValue.getValue()))
-                    .setDefaultValue(list(cast(configValue.getDefaultValue(), String[].class)))
-                    .setTooltip(splitLine(configValue.getComment()))
-                    .setExpended(true)
-                    .setSaveConsumer(var -> configValue.setValue(var.toArray(new String[0])))
-                    .setErrorSupplier(var -> error(configValue.getConstraints(), var.toArray(new String[0]), String[].class))
-                    .build();
+            return configEntryBuilder.startStrList("config." + modId + "." + configValue.getName(), Lists.newArrayList((String[]) configValue.getValue())).setDefaultValue(list(cast(configValue.getDefaultValue(), String[].class))).setTooltip(splitLine(configValue.getComment())).setExpended(true).setSaveConsumer(var -> configValue.setValue(var.toArray(new String[0]))).setErrorSupplier(var -> error(configValue.getConstraints(), var.toArray(new String[0]), String[].class)).build();
         });
     }
     
@@ -266,22 +205,24 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
             String defaultS = defaultCategoryNode == node ? getDefaultCategoryKey() : "config." + modId + "." + defaultCategoryNode.getName();
             if (builder.hasCategory(defaultS)) {
                 builder.setFallbackCategory(builder.getOrCreateCategory(defaultS));
-            } else try {
-                throw new IllegalStateException("Illegal default config category!");
-            } catch (IllegalStateException e) {
-                e.printStackTrace();
-                return new Result() {
-                    @Override
-                    public boolean isSuccessful() {
-                        return false;
-                    }
-                    
-                    @Override
-                    public Screen getScreen() {
-                        return null;
-                    }
-                };
-            }
+            } else
+                try {
+                    if (defaultCategoryNode != node)
+                        throw new IllegalStateException("Illegal default config category!");
+                } catch (IllegalStateException e) {
+                    e.printStackTrace();
+                    return new Result() {
+                        @Override
+                        public boolean isSuccessful() {
+                            return false;
+                        }
+                        
+                        @Override
+                        public Screen getScreen() {
+                            return null;
+                        }
+                    };
+                }
             if (saveRunnable != null)
                 builder.setSavingRunnable(saveRunnable);
             Screen screen = builder.setAfterInitConsumer(afterInitConsumer).build();
