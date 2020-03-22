@@ -28,8 +28,8 @@ public class ModMenuCompat implements ModMenuApi {
                     .withParent(node)
                     .withDefaultValue(100)
                     .constraints()
-                    .minNumerical(0)
-                    .maxNumerical(100)
+                    .atLeast(0)
+                    .atMost(100)
                     .finish()
                     .build();
             ConfigValue<String> nestedExample = ConfigValue.builder(String.class)
