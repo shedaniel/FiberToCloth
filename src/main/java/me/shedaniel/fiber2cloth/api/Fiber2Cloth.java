@@ -1,10 +1,9 @@
 package me.shedaniel.fiber2cloth.api;
 
 import me.shedaniel.fiber2cloth.impl.FakeFiber2Cloth;
-import me.zeroeightsix.fiber.tree.ConfigNode;
-import me.zeroeightsix.fiber.tree.ConfigValue;
-import me.zeroeightsix.fiber.tree.Node;
-import me.zeroeightsix.fiber.tree.TreeItem;
+import me.zeroeightsix.fiber.api.tree.ConfigBranch;
+import me.zeroeightsix.fiber.api.tree.ConfigLeaf;
+import me.zeroeightsix.fiber.api.tree.ConfigNode;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resource.language.I18n;
 
@@ -16,7 +15,7 @@ import java.util.function.Function;
 
 public interface Fiber2Cloth {
     
-    static Fiber2Cloth create(Screen parentScreen, String modId, ConfigNode node, String title) {
+    static Fiber2Cloth create(Screen parentScreen, String modId, ConfigBranch node, String title) {
         try {
             return (Fiber2Cloth) Class.forName("me.shedaniel.fiber2cloth.impl.Fiber2ClothImpl").getConstructor(Screen.class, String.class, ConfigNode.class, String.class).newInstance(parentScreen, modId, node, I18n.translate(Objects.requireNonNull(title)));
         } catch (InstantiationException | ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
@@ -29,34 +28,34 @@ public interface Fiber2Cloth {
     
     Fiber2Cloth setAfterInitConsumer(Consumer<Screen> afterInitConsumer);
     
-    Node getDefaultCategoryNode();
+    ConfigBranch getDefaultCategoryNode();
     
-    Fiber2Cloth setDefaultCategoryNode(Node defaultCategoryNode);
+    Fiber2Cloth setDefaultCategoryNode(ConfigBranch defaultCategoryNode);
     
     Fiber2Cloth setSaveRunnable(Runnable saveRunnable);
     
-    default Fiber2Cloth registerNodeEntryFunction(Node node, Function function) {
+    default Fiber2Cloth registerNodeEntryFunction(ConfigBranch node, Function function) {
         registerTreeEntryFunction(node, function);
         return this;
     }
     
-    default Fiber2Cloth hideNode(Node node) {
+    default Fiber2Cloth hideNode(ConfigBranch node) {
         hideTreeEntry(node);
         return this;
     }
     
-    default Fiber2Cloth hideTreeEntry(TreeItem item) {
+    default Fiber2Cloth hideTreeEntry(ConfigNode item) {
         registerTreeEntryFunction(item, null);
         return this;
     }
     
-    Fiber2Cloth registerTreeEntryFunction(TreeItem item, Function function);
+    Fiber2Cloth registerTreeEntryFunction(ConfigNode item, Function function);
     
-    Fiber2Cloth registerNodeEntryFunction(Class clazz, Function<ConfigValue, Object> function);
+    Fiber2Cloth registerNodeEntryFunction(Class clazz, Function<ConfigLeaf<?>, Object> function);
     
     Map<Class, Function> getFunctionMap();
     
-    ConfigNode getNode();
+    ConfigBranch getNode();
     
     Screen getParentScreen();
     

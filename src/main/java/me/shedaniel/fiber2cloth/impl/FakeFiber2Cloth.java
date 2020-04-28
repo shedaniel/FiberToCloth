@@ -2,9 +2,8 @@ package me.shedaniel.fiber2cloth.impl;
 
 import com.google.common.collect.Maps;
 import me.shedaniel.fiber2cloth.api.Fiber2Cloth;
-import me.zeroeightsix.fiber.tree.ConfigNode;
-import me.zeroeightsix.fiber.tree.Node;
-import me.zeroeightsix.fiber.tree.TreeItem;
+import me.zeroeightsix.fiber.api.tree.ConfigBranch;
+import me.zeroeightsix.fiber.api.tree.ConfigNode;
 import net.minecraft.client.gui.screen.Screen;
 
 import java.util.Map;
@@ -15,10 +14,10 @@ public class FakeFiber2Cloth implements Fiber2Cloth {
     
     private Screen parentScreen;
     private String title;
-    private ConfigNode node;
+    private ConfigBranch node;
     
     @Deprecated
-    public FakeFiber2Cloth(Screen parentScreen, ConfigNode node, String title) {
+    public FakeFiber2Cloth(Screen parentScreen, ConfigBranch node, String title) {
         this.parentScreen = parentScreen;
         this.node = node;
         this.title = title;
@@ -35,12 +34,12 @@ public class FakeFiber2Cloth implements Fiber2Cloth {
     }
     
     @Override
-    public Fiber2Cloth setDefaultCategoryNode(Node defaultCategoryNode) {
+    public Fiber2Cloth setDefaultCategoryNode(ConfigBranch defaultCategoryNode) {
         return this;
     }
     
     @Override
-    public Node getDefaultCategoryNode() {
+    public ConfigBranch getDefaultCategoryNode() {
         return node;
     }
     
@@ -50,7 +49,7 @@ public class FakeFiber2Cloth implements Fiber2Cloth {
     }
     
     @Override
-    public Fiber2Cloth registerTreeEntryFunction(TreeItem item, Function function) {
+    public Fiber2Cloth registerTreeEntryFunction(ConfigNode item, Function function) {
         return this;
     }
     
@@ -65,7 +64,7 @@ public class FakeFiber2Cloth implements Fiber2Cloth {
     }
     
     @Override
-    public ConfigNode getNode() {
+    public ConfigBranch getNode() {
         return node;
     }
     

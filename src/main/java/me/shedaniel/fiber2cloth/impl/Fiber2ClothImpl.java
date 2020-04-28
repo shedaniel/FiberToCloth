@@ -8,8 +8,10 @@ import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 import me.shedaniel.clothconfig2.gui.entries.SubCategoryListEntry;
 import me.shedaniel.fiber2cloth.api.Fiber2Cloth;
-import me.zeroeightsix.fiber.constraint.Constraint;
-import me.zeroeightsix.fiber.tree.*;
+import me.zeroeightsix.fiber.api.constraint.Constraint;
+import me.zeroeightsix.fiber.api.tree.ConfigBranch;
+import me.zeroeightsix.fiber.api.tree.ConfigLeaf;
+import me.zeroeightsix.fiber.api.tree.ConfigNode;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resource.language.I18n;
 
@@ -23,16 +25,16 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
     private Screen parentScreen;
     private String defaultCategory = "config.fiber2cloth.default.category";
     private String title;
-    private ConfigNode node;
-    private Node defaultCategoryNode;
-    private Map<Class, Function<ConfigValue, AbstractConfigListEntry>> functionMap = Maps.newHashMap();
-    private Map<TreeItem, Function<TreeItem, AbstractConfigListEntry>> treeEntryMap = Maps.newHashMap();
+    private ConfigBranch node;
+    private ConfigBranch defaultCategoryNode;
+    private Map<Class, Function<ConfigLeaf, AbstractConfigListEntry>> functionMap = Maps.newHashMap();
+    private Map<ConfigNode, Function<ConfigNode, AbstractConfigListEntry>> treeEntryMap = Maps.newHashMap();
     private ConfigEntryBuilder configEntryBuilder = ConfigEntryBuilder.create();
     private Runnable saveRunnable;
     private Consumer<Screen> afterInitConsumer = screen -> {};
     
     @Deprecated
-    public Fiber2ClothImpl(Screen parentScreen, String modId, ConfigNode node, String title) {
+    public Fiber2ClothImpl(Screen parentScreen, String modId, ConfigBranch node, String title) {
         this.parentScreen = parentScreen;
         this.node = node;
         this.defaultCategoryNode = node;
@@ -73,7 +75,7 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
     }
     
     @Override
-    public Fiber2Cloth setDefaultCategoryNode(Node defaultCategoryNode) {
+    public Fiber2Cloth setDefaultCategoryNode(ConfigBranch defaultCategoryNode) {
         if (!node.getItems().contains(defaultCategoryNode))
             throw new IllegalArgumentException("The default category node must be on the first level!");
         this.defaultCategoryNode = Objects.requireNonNull(defaultCategoryNode);
@@ -81,7 +83,7 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
     }
     
     @Override
-    public Node getDefaultCategoryNode() {
+    public ConfigBranch getDefaultCategoryNode() {
         return defaultCategoryNode;
     }
     
@@ -103,7 +105,7 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
     }
     
     @Override
-    public Fiber2Cloth registerTreeEntryFunction(TreeItem node, Function function) {
+    public Fiber2Cloth registerTreeEntryFunction(ConfigNode node, Function function) {
         treeEntryMap.put(node, function);
         return this;
     }
@@ -149,24 +151,24 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
             return configEntryBuilder.startStrField("config." + modId + "." + configValue.getName(), (String) configValue.getValue()).setDefaultValue(cast(configValue.getDefaultValue(), String.class)).setTooltip(splitLine(configValue.getComment())).setSaveConsumer(var -> configValue.setValue(var)).setErrorSupplier(var -> error(configValue.getConstraints(), var, String.class)).build();
         });
         functionMap.put(Integer[].class, configValue -> {
-            return configEntryBuilder.startIntList("config." + modId + "." + configValue.getName(), Lists.newArrayList((Integer[]) configValue.getValue())).setDefaultValue(list(cast(configValue.getDefaultValue(), Integer[].class))).setTooltip(splitLine(configValue.getComment())).setExpended(true).setSaveConsumer(var -> configValue.setValue(var.toArray(new Integer[0]))).setErrorSupplier(var -> error(configValue.getConstraints(), var.toArray(new Integer[0]), Integer[].class)).build();
+            return configEntryBuilder.startIntList("config." + modId + "." + configValue.getName(), Lists.newArrayList((Integer[]) configValue.getValue())).setDefaultValue(list(cast(configValue.getDefaultValue(), Integer[].class))).setTooltip(splitLine(configValue.getComment())).setExpanded(true).setSaveConsumer(var -> configValue.setValue(var.toArray(new Integer[0]))).setErrorSupplier(var -> error(configValue.getConstraints(), var.toArray(new Integer[0]), Integer[].class)).build();
         });
         functionMap.put(Long[].class, configValue -> {
-            return configEntryBuilder.startLongList("config." + modId + "." + configValue.getName(), Lists.newArrayList((Long[]) configValue.getValue())).setDefaultValue(list(cast(configValue.getDefaultValue(), Long[].class))).setTooltip(splitLine(configValue.getComment())).setExpended(true).setSaveConsumer(var -> configValue.setValue(var.toArray(new Long[0]))).setErrorSupplier(var -> error(configValue.getConstraints(), var.toArray(new Long[0]), Long[].class)).build();
+            return configEntryBuilder.startLongList("config." + modId + "." + configValue.getName(), Lists.newArrayList((Long[]) configValue.getValue())).setDefaultValue(list(cast(configValue.getDefaultValue(), Long[].class))).setTooltip(splitLine(configValue.getComment())).setExpanded(true).setSaveConsumer(var -> configValue.setValue(var.toArray(new Long[0]))).setErrorSupplier(var -> error(configValue.getConstraints(), var.toArray(new Long[0]), Long[].class)).build();
         });
         functionMap.put(Double[].class, configValue -> {
-            return configEntryBuilder.startDoubleList("config." + modId + "." + configValue.getName(), Lists.newArrayList((Double[]) configValue.getValue())).setDefaultValue(list(cast(configValue.getDefaultValue(), Double[].class))).setTooltip(splitLine(configValue.getComment())).setExpended(true).setSaveConsumer(var -> configValue.setValue(var.toArray(new Double[0]))).setErrorSupplier(var -> error(configValue.getConstraints(), var.toArray(new Double[0]), Double[].class)).build();
+            return configEntryBuilder.startDoubleList("config." + modId + "." + configValue.getName(), Lists.newArrayList((Double[]) configValue.getValue())).setDefaultValue(list(cast(configValue.getDefaultValue(), Double[].class))).setTooltip(splitLine(configValue.getComment())).setExpanded(true).setSaveConsumer(var -> configValue.setValue(var.toArray(new Double[0]))).setErrorSupplier(var -> error(configValue.getConstraints(), var.toArray(new Double[0]), Double[].class)).build();
         });
         functionMap.put(Float[].class, configValue -> {
-            return configEntryBuilder.startFloatList("config." + modId + "." + configValue.getName(), Lists.newArrayList((Float[]) configValue.getValue())).setDefaultValue(list(cast(configValue.getDefaultValue(), Float[].class))).setTooltip(splitLine(configValue.getComment())).setExpended(true).setSaveConsumer(var -> configValue.setValue(var.toArray(new Float[0]))).setErrorSupplier(var -> error(configValue.getConstraints(), var.toArray(new Float[0]), Float[].class)).build();
+            return configEntryBuilder.startFloatList("config." + modId + "." + configValue.getName(), Lists.newArrayList((Float[]) configValue.getValue())).setDefaultValue(list(cast(configValue.getDefaultValue(), Float[].class))).setTooltip(splitLine(configValue.getComment())).setExpanded(true).setSaveConsumer(var -> configValue.setValue(var.toArray(new Float[0]))).setErrorSupplier(var -> error(configValue.getConstraints(), var.toArray(new Float[0]), Float[].class)).build();
         });
         functionMap.put(String[].class, configValue -> {
-            return configEntryBuilder.startStrList("config." + modId + "." + configValue.getName(), Lists.newArrayList((String[]) configValue.getValue())).setDefaultValue(list(cast(configValue.getDefaultValue(), String[].class))).setTooltip(splitLine(configValue.getComment())).setExpended(true).setSaveConsumer(var -> configValue.setValue(var.toArray(new String[0]))).setErrorSupplier(var -> error(configValue.getConstraints(), var.toArray(new String[0]), String[].class)).build();
+            return configEntryBuilder.startStrList("config." + modId + "." + configValue.getName(), Lists.newArrayList((String[]) configValue.getValue())).setDefaultValue(list(cast(configValue.getDefaultValue(), String[].class))).setTooltip(splitLine(configValue.getComment())).setExpanded(true).setSaveConsumer(var -> configValue.setValue(var.toArray(new String[0]))).setErrorSupplier(var -> error(configValue.getConstraints(), var.toArray(new String[0]), String[].class)).build();
         });
     }
     
     @Override
-    public ConfigNode getNode() {
+    public ConfigBranch getNode() {
         return node;
     }
     
@@ -253,11 +255,11 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
         }
     }
     
-    public void addNode(ConfigBuilder builder, ConfigNode configNode) {
-        List<TreeItem> items = Lists.newArrayList(configNode.getItems());
+    public void addNode(ConfigBuilder builder, ConfigBranch configNode) {
+        List<ConfigNode> items = Lists.newArrayList(configNode.getItems());
         {
-            List<TreeItem> toRemove = Lists.newArrayList();
-            for(TreeItem item : items) {
+            List<ConfigNode> toRemove = Lists.newArrayList();
+            for(ConfigNode item : items) {
                 if (treeEntryMap.containsKey(item)) {
                     if (treeEntryMap.get(item) != null)
                         builder.getOrCreateCategory(getDefaultCategoryKey()).addEntry(treeEntryMap.get(item).apply(item));
@@ -267,8 +269,8 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
             items.removeAll(toRemove);
         }
         {
-            List<TreeItem> toRemove = Lists.newArrayList();
-            items.stream().filter(item -> item instanceof ConfigValue).map(item -> (ConfigValue) item).sorted(Comparator.comparing(ConfigLeaf::getName)).forEach(value -> {
+            List<ConfigNode> toRemove = Lists.newArrayList();
+            items.stream().filter(item -> item instanceof ConfigLeaf<?>).map(item -> (ConfigLeaf<?>) item).sorted(Comparator.comparing(ConfigLeaf::getName)).forEach(value -> {
                 Class type = value.getType();
                 if (functionMap.containsKey(type)) {
                     builder.getOrCreateCategory(getDefaultCategoryKey()).addEntry(functionMap.get(type).apply(value));
@@ -277,17 +279,17 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
             });
             items.removeAll(toRemove);
         }
-        items.stream().filter(item -> item instanceof ConfigNode).map(item -> (ConfigNode) item).sorted(Comparator.comparing(ConfigLeaf::getName)).forEach(node -> {
+        items.stream().filter(item -> item instanceof ConfigBranch).map(item -> (ConfigBranch) item).sorted(Comparator.comparing(ConfigNode::getName)).forEach(node -> {
             addNodeFirstLayer(builder, builder.getOrCreateCategory("config." + modId + "." + node.getName()), node.getName(), node);
         });
     }
     
     @SuppressWarnings("deprecation")
-    public void addNodeFirstLayer(ConfigBuilder builder, ConfigCategory category, String categoryName, ConfigNode configNode) {
-        List<TreeItem> items = Lists.newArrayList(configNode.getItems());
+    public void addNodeFirstLayer(ConfigBuilder builder, ConfigCategory category, String categoryName, ConfigBranch configNode) {
+        List<ConfigNode> items = Lists.newArrayList(configNode.getItems());
         {
-            List<TreeItem> toRemove = Lists.newArrayList();
-            for(TreeItem item : items) {
+            List<ConfigNode> toRemove = Lists.newArrayList();
+            for(ConfigNode item : items) {
                 if (treeEntryMap.containsKey(item)) {
                     if (treeEntryMap.get(item) != null)
                         category.addEntry(treeEntryMap.get(item).apply(item));
@@ -297,8 +299,8 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
             items.removeAll(toRemove);
         }
         {
-            List<TreeItem> toRemove = Lists.newArrayList();
-            items.stream().filter(item -> item instanceof ConfigValue).map(item -> (ConfigValue) item).sorted(Comparator.comparing(ConfigLeaf::getName)).forEach(value -> {
+            List<ConfigNode> toRemove = Lists.newArrayList();
+            items.stream().filter(item -> item instanceof ConfigLeaf<?>).map(item -> (ConfigLeaf<?>) item).sorted(Comparator.comparing(ConfigLeaf::getName)).forEach(value -> {
                 Class type = value.getType();
                 if (functionMap.containsKey(type)) {
                     category.addEntry(functionMap.get(type).apply(value));
@@ -307,7 +309,7 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
             });
             items.removeAll(toRemove);
         }
-        items.stream().filter(item -> item instanceof ConfigNode).map(item -> (ConfigNode) item).sorted(Comparator.comparing(ConfigLeaf::getName)).forEach(nestedNode -> {
+        items.stream().filter(item -> item instanceof ConfigBranch).map(item -> (ConfigBranch) item).sorted(Comparator.comparing(ConfigNode::getName)).forEach(nestedNode -> {
             String s = "config." + modId + "." + categoryName + "." + nestedNode.getName();
             SubCategoryListEntry entry = null;
             for(Object o : category.getEntries()) {
@@ -319,18 +321,18 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
                 }
             }
             if (entry == null) {
-                entry = configEntryBuilder.startSubCategory(s, Lists.newArrayList()).setExpended(true).setTooltip(splitLine(nestedNode.getComment())).build();
+                entry = configEntryBuilder.startSubCategory(s, Lists.newArrayList()).setExpanded(true).setTooltip(splitLine(nestedNode.getComment())).build();
                 category.addEntry(entry);
             }
             addNodeSecondLayer(builder, entry, categoryName + "." + nestedNode.getName(), nestedNode);
         });
     }
     
-    public void addNodeSecondLayer(ConfigBuilder builder, SubCategoryListEntry subCategory, String categoryName, ConfigNode nestedNode) {
-        List<TreeItem> items = Lists.newArrayList(nestedNode.getItems());
+    public void addNodeSecondLayer(ConfigBuilder builder, SubCategoryListEntry subCategory, String categoryName, ConfigBranch nestedNode) {
+        List<ConfigNode> items = Lists.newArrayList(nestedNode.getItems());
         {
-            List<TreeItem> toRemove = Lists.newArrayList();
-            for(TreeItem item : items) {
+            List<ConfigNode> toRemove = Lists.newArrayList();
+            for(ConfigNode item : items) {
                 if (treeEntryMap.containsKey(item)) {
                     if (treeEntryMap.get(item) != null) {
                         AbstractConfigListEntry entry = treeEntryMap.get(item).apply(item);
@@ -343,8 +345,8 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
             items.removeAll(toRemove);
         }
         {
-            List<TreeItem> toRemove = Lists.newArrayList();
-            items.stream().filter(item -> item instanceof ConfigValue).map(item -> (ConfigValue) item).sorted(Comparator.comparing(ConfigLeaf::getName)).forEach(value -> {
+            List<ConfigNode> toRemove = Lists.newArrayList();
+            items.stream().filter(item -> item instanceof ConfigLeaf<?>).map(item -> (ConfigLeaf<?>) item).sorted(Comparator.comparing(ConfigLeaf::getName)).forEach(value -> {
                 Class type = value.getType();
                 if (functionMap.containsKey(type)) {
                     AbstractConfigListEntry entry = functionMap.get(type).apply(value);
@@ -355,7 +357,7 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
             });
             items.removeAll(toRemove);
         }
-        items.stream().filter(item -> item instanceof ConfigNode).map(item -> (ConfigNode) item).sorted(Comparator.comparing(ConfigLeaf::getName)).forEach(nestedNestedNode -> {
+        items.stream().filter(item -> item instanceof ConfigBranch).map(item -> (ConfigBranch) item).sorted(Comparator.comparing(ConfigNode::getName)).forEach(nestedNestedNode -> {
             String s = "config." + modId + "." + categoryName + "." + nestedNestedNode.getName();
             SubCategoryListEntry entry = null;
             for(AbstractConfigListEntry o : subCategory.getValue()) {
@@ -367,7 +369,7 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
                 }
             }
             if (entry == null) {
-                entry = configEntryBuilder.startSubCategory(s, Lists.newArrayList()).setExpended(true).setTooltip(splitLine(nestedNestedNode.getComment())).build();
+                entry = configEntryBuilder.startSubCategory(s, Lists.newArrayList()).setExpanded(true).setTooltip(splitLine(nestedNestedNode.getComment())).build();
                 subCategory.getValue().add(entry);
                 ((List) subCategory.children()).add(entry);
             }

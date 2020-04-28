@@ -1,5 +1,5 @@
 plugins {
-    id 'fabric-loom' version '0.2.5-SNAPSHOT'
+    id 'fabric-loom' version '0.4.3'
     id 'maven-publish'
     id 'maven'
     id 'signing'
@@ -25,10 +25,10 @@ dependencies {
 
     // Fabric API. This is technically optional, but you probably want it anyway.
     modApi "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-    modApi ("me.shedaniel.cloth:config-2:1.1.1") {
+    modApi ("me.shedaniel.cloth:config-2:${cloth_version}") {
         exclude group: "net.fabricmc.fabric-api"
     }
-    modApi "me.zeroeightsix:fiber:0.12.0-5"
+    modApi "me.zeroeightsix:fiber:${project.fiber_version}"
 
     // PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
     // You may need to force-disable transitiveness on them.
