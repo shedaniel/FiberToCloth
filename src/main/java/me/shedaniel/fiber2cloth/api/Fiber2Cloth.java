@@ -18,7 +18,7 @@ public interface Fiber2Cloth {
     
     static Fiber2Cloth create(Screen parentScreen, String modId, ConfigBranch node, String title) {
         try {
-            return (Fiber2Cloth) Class.forName("me.shedaniel.fiber2cloth.impl.Fiber2ClothImpl").getConstructor(Screen.class, String.class, ConfigNode.class, String.class).newInstance(parentScreen, modId, node, I18n.translate(Objects.requireNonNull(title)));
+            return (Fiber2Cloth) Class.forName("me.shedaniel.fiber2cloth.impl.Fiber2ClothImpl").getConstructor(Screen.class, String.class, ConfigBranch.class, String.class).newInstance(parentScreen, modId, node, I18n.translate(Objects.requireNonNull(title)));
         } catch (InstantiationException | ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
             return new FakeFiber2Cloth(parentScreen, node, I18n.translate(Objects.requireNonNull(title)));

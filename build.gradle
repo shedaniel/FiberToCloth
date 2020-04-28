@@ -28,6 +28,7 @@ dependencies {
     modApi ("me.shedaniel.cloth:config-2:${cloth_version}") {
         exclude group: "net.fabricmc.fabric-api"
     }
+    modImplementation ("io.github.prospector:modmenu:1.10.2+build.35")
     modApi "me.zeroeightsix:fiber:${project.fiber_version}"
 
     // PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
