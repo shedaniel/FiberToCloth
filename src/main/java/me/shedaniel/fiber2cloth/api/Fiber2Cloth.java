@@ -1,5 +1,6 @@
 package me.shedaniel.fiber2cloth.api;
 
+import me.shedaniel.clothconfig2.api.AbstractConfigListEntry;
 import me.shedaniel.fiber2cloth.impl.FakeFiber2Cloth;
 import me.zeroeightsix.fiber.api.tree.ConfigBranch;
 import me.zeroeightsix.fiber.api.tree.ConfigLeaf;
@@ -49,11 +50,11 @@ public interface Fiber2Cloth {
         return this;
     }
     
-    Fiber2Cloth registerTreeEntryFunction(ConfigNode item, Function function);
+    Fiber2Cloth registerTreeEntryFunction(ConfigNode item, Function<ConfigNode, AbstractConfigListEntry<?>> function);
     
-    Fiber2Cloth registerNodeEntryFunction(Class clazz, Function<ConfigLeaf<?>, Object> function);
+    Fiber2Cloth registerNodeEntryFunction(Class<?> clazz, Function<ConfigLeaf<?>, AbstractConfigListEntry<?>> function);
     
-    Map<Class, Function> getFunctionMap();
+    Map<Class<?>, Function<ConfigLeaf<?>, AbstractConfigListEntry<?>>> getFunctionMap();
     
     ConfigBranch getNode();
     

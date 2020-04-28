@@ -1,8 +1,10 @@
 package me.shedaniel.fiber2cloth.impl;
 
 import com.google.common.collect.Maps;
+import me.shedaniel.clothconfig2.api.AbstractConfigListEntry;
 import me.shedaniel.fiber2cloth.api.Fiber2Cloth;
 import me.zeroeightsix.fiber.api.tree.ConfigBranch;
+import me.zeroeightsix.fiber.api.tree.ConfigLeaf;
 import me.zeroeightsix.fiber.api.tree.ConfigNode;
 import net.minecraft.client.gui.screen.Screen;
 
@@ -54,12 +56,12 @@ public class FakeFiber2Cloth implements Fiber2Cloth {
     }
     
     @Override
-    public Fiber2Cloth registerNodeEntryFunction(Class clazz, Function function) {
+    public Fiber2Cloth registerNodeEntryFunction(Class<?> clazz, Function<ConfigLeaf<?>, AbstractConfigListEntry<?>> function) {
         return this;
     }
     
     @Override
-    public Map<Class, Function> getFunctionMap() {
+    public Map<Class<?>, Function<ConfigLeaf<?>, AbstractConfigListEntry<?>>> getFunctionMap() {
         return Maps.newHashMap();
     }
     
