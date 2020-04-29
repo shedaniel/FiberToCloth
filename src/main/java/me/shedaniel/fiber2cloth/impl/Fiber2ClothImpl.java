@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import me.shedaniel.clothconfig2.api.*;
 import me.shedaniel.clothconfig2.gui.entries.SubCategoryListEntry;
+import me.shedaniel.fiber2cloth.api.ClothAttributes;
 import me.shedaniel.fiber2cloth.api.Fiber2Cloth;
 import me.zeroeightsix.fiber.api.constraint.Constraint;
 import me.zeroeightsix.fiber.api.tree.ConfigBranch;
@@ -12,6 +13,7 @@ import me.zeroeightsix.fiber.api.tree.ConfigNode;
 import net.minecraft.client.gui.Element;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resource.language.I18n;
+import net.minecraft.util.Identifier;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -190,10 +192,11 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
         try {
             ConfigBuilder builder = ConfigBuilder.create().setTitle(getTitle()).setParentScreen(getParentScreen());
             addNode(builder, getNode());
+            getNode().getAttributeValue(ClothAttributes.BACKGROUND, Identifier.class).ifPresent(builder::setDefaultBackgroundTexture);
             String defaultS = defaultCategoryNode == node ? getDefaultCategoryKey() : "config." + modId + "." + defaultCategoryNode.getName();
             if (builder.hasCategory(defaultS)) {
                 builder.setFallbackCategory(builder.getOrCreateCategory(defaultS));
-            } else
+            } else {
                 try {
                     if (defaultCategoryNode != node)
                         throw new IllegalStateException("Illegal default config category!");
@@ -204,13 +207,14 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
                         public boolean isSuccessful() {
                             return false;
                         }
-                        
+
                         @Override
                         public Screen getScreen() {
                             return null;
                         }
                     };
                 }
+            }
             if (saveRunnable != null)
                 builder.setSavingRunnable(saveRunnable);
             Screen screen = builder.setAfterInitConsumer(afterInitConsumer).build();
@@ -247,8 +251,11 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
             List<ConfigNode> toRemove = Lists.newArrayList();
             for(ConfigNode item : items) {
                 if (treeEntryMap.containsKey(item)) {
-                    if (treeEntryMap.get(item) != null)
-                        builder.getOrCreateCategory(getDefaultCategoryKey()).addEntry(treeEntryMap.get(item).apply(item));
+                    if (treeEntryMap.get(item) != null) {
+                        ConfigCategory defaultCategory = builder.getOrCreateCategory(getDefaultCategoryKey());
+                        defaultCategory.addEntry(treeEntryMap.get(item).apply(item));
+                        node.getAttributeValue(ClothAttributes.CATEGORY_BACKGROUND, Identifier.class).ifPresent(defaultCategory::setCategoryBackground);
+                    }
                     toRemove.add(item);
                 }
             }
@@ -259,13 +266,22 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
             items.stream().filter(item -> item instanceof ConfigLeaf<?>).map(item -> (ConfigLeaf<?>) item).sorted(Comparator.comparing(ConfigLeaf::getName)).forEach(value -> {
                 Class<?> type = value.getType();
                 if (functionMap.containsKey(type)) {
-                    builder.getOrCreateCategory(getDefaultCategoryKey()).addEntry(functionMap.get(type).apply(value));
+                    ConfigCategory defaultCategory = builder.getOrCreateCategory(getDefaultCategoryKey());
+                    defaultCategory.addEntry(functionMap.get(type).apply(value));
+                    node.getAttributeValue(ClothAttributes.CATEGORY_BACKGROUND, Identifier.class).ifPresent(defaultCategory::setCategoryBackground);
                     toRemove.add(value);
                 }
             });
             items.removeAll(toRemove);
         }
-        items.stream().filter(item -> item instanceof ConfigBranch).map(item -> (ConfigBranch) item).sorted(Comparator.comparing(ConfigNode::getName)).forEach(node -> addNodeFirstLayer(builder, builder.getOrCreateCategory("config." + modId + "." + node.getName()), node.getName(), node));
+        items.stream().filter(item -> item instanceof ConfigBranch)
+                .map(item -> (ConfigBranch) item)
+                .sorted(Comparator.comparing(ConfigNode::getName))
+                .forEach(node -> {
+                    ConfigCategory category = builder.getOrCreateCategory("config." + modId + "." + node.getName());
+                    node.getAttributeValue(ClothAttributes.CATEGORY_BACKGROUND, Identifier.class).ifPresent(category::setCategoryBackground);
+                    addNodeFirstLayer(builder, category, node.getName(), node);
+                });
     }
     
     @SuppressWarnings("deprecation")
