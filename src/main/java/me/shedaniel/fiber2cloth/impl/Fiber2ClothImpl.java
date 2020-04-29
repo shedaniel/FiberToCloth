@@ -246,135 +246,96 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
     }
     
     private void addNode(ConfigBuilder builder, ConfigBranch configNode) {
-        List<ConfigNode> items = Lists.newArrayList(configNode.getItems());
-        {
-            List<ConfigNode> toRemove = Lists.newArrayList();
-            for(ConfigNode item : items) {
-                if (treeEntryMap.containsKey(item)) {
-                    if (treeEntryMap.get(item) != null) {
-                        ConfigCategory defaultCategory = builder.getOrCreateCategory(getDefaultCategoryKey());
-                        defaultCategory.addEntry(treeEntryMap.get(item).apply(item));
-                        node.getAttributeValue(ClothAttributes.CATEGORY_BACKGROUND, Identifier.class).ifPresent(defaultCategory::setCategoryBackground);
-                    }
-                    toRemove.add(item);
-                }
+        for (ConfigNode item : configNode.getItems()) {
+            if (treeEntryMap.containsKey(item)) {
+                appendToDefaultCategory(builder, item, treeEntryMap.get(item));
+            } else if (item instanceof ConfigLeaf<?>) {
+                ConfigLeaf<?> value = (ConfigLeaf<?>) item;
+                appendToDefaultCategory(builder, value, functionMap.get(value.getType()));
+            } else if (item instanceof ConfigBranch) {
+                ConfigBranch configBranch = (ConfigBranch) item;
+                ConfigCategory category = builder.getOrCreateCategory("config." + modId + "." + configBranch.getName());
+                configBranch.getAttributeValue(ClothAttributes.CATEGORY_BACKGROUND, Identifier.class).ifPresent(category::setCategoryBackground);
+                addNodeFirstLayer(builder, category, configBranch.getName(), configBranch);
             }
-            items.removeAll(toRemove);
         }
-        {
-            List<ConfigNode> toRemove = Lists.newArrayList();
-            items.stream().filter(item -> item instanceof ConfigLeaf<?>).map(item -> (ConfigLeaf<?>) item).sorted(Comparator.comparing(ConfigLeaf::getName)).forEach(value -> {
-                Class<?> type = value.getType();
-                if (functionMap.containsKey(type)) {
-                    ConfigCategory defaultCategory = builder.getOrCreateCategory(getDefaultCategoryKey());
-                    defaultCategory.addEntry(functionMap.get(type).apply(value));
-                    node.getAttributeValue(ClothAttributes.CATEGORY_BACKGROUND, Identifier.class).ifPresent(defaultCategory::setCategoryBackground);
-                    toRemove.add(value);
-                }
-            });
-            items.removeAll(toRemove);
-        }
-        items.stream().filter(item -> item instanceof ConfigBranch)
-                .map(item -> (ConfigBranch) item)
-                .sorted(Comparator.comparing(ConfigNode::getName))
-                .forEach(node -> {
-                    ConfigCategory category = builder.getOrCreateCategory("config." + modId + "." + node.getName());
-                    node.getAttributeValue(ClothAttributes.CATEGORY_BACKGROUND, Identifier.class).ifPresent(category::setCategoryBackground);
-                    addNodeFirstLayer(builder, category, node.getName(), node);
-                });
     }
-    
+
+    private <T extends ConfigNode> void appendToDefaultCategory(ConfigBuilder builder, T value, Function<T, AbstractConfigListEntry<?>> factory) {
+        if (factory != null) {
+            AbstractConfigListEntry<?> entry = factory.apply(value);
+            ConfigCategory defaultCategory = builder.getOrCreateCategory(getDefaultCategoryKey());
+            defaultCategory.addEntry(entry);
+            node.getAttributeValue(ClothAttributes.CATEGORY_BACKGROUND, Identifier.class).ifPresent(defaultCategory::setCategoryBackground);
+        }
+    }
+
     @SuppressWarnings("deprecation")
     private void addNodeFirstLayer(ConfigBuilder builder, ConfigCategory category, String categoryName, ConfigBranch configNode) {
-        List<ConfigNode> items = Lists.newArrayList(configNode.getItems());
-        {
-            List<ConfigNode> toRemove = Lists.newArrayList();
-            for(ConfigNode item : items) {
-                if (treeEntryMap.containsKey(item)) {
-                    if (treeEntryMap.get(item) != null)
-                        category.addEntry(treeEntryMap.get(item).apply(item));
-                    toRemove.add(item);
+        for (ConfigNode item : configNode.getItems()) {
+            if (treeEntryMap.containsKey(item)) {
+                if (treeEntryMap.get(item) != null) {
+                    category.addEntry(treeEntryMap.get(item).apply(item));
                 }
-            }
-            items.removeAll(toRemove);
-        }
-        {
-            List<ConfigNode> toRemove = Lists.newArrayList();
-            items.stream().filter(item -> item instanceof ConfigLeaf<?>).map(item -> (ConfigLeaf<?>) item).sorted(Comparator.comparing(ConfigLeaf::getName)).forEach(value -> {
+            } else if (item instanceof ConfigLeaf<?>) {
+                ConfigLeaf<?> value = (ConfigLeaf<?>) item;
                 Class<?> type = value.getType();
                 if (functionMap.containsKey(type)) {
                     category.addEntry(functionMap.get(type).apply(value));
-                    toRemove.add(value);
                 }
-            });
-            items.removeAll(toRemove);
-        }
-        items.stream().filter(item -> item instanceof ConfigBranch).map(item -> (ConfigBranch) item).sorted(Comparator.comparing(ConfigNode::getName)).forEach(nestedNode -> {
-            String s = "config." + modId + "." + categoryName + "." + nestedNode.getName();
-            SubCategoryListEntry entry = null;
-            for(Object o : category.getEntries()) {
-                if (o instanceof SubCategoryListEntry) {
-                    if (((SubCategoryListEntry) o).getFieldName().equals(s)) {
-                        entry = (SubCategoryListEntry) o;
-                        break;
+            } else if (item instanceof ConfigBranch) {
+                ConfigBranch nestedNode = (ConfigBranch) item;
+                String s = "config." + modId + "." + categoryName + "." + nestedNode.getName();
+                SubCategoryListEntry entry = null;
+                for (Object o : category.getEntries()) {
+                    if (o instanceof SubCategoryListEntry) {
+                        if (((SubCategoryListEntry) o).getFieldName().equals(s)) {
+                            entry = (SubCategoryListEntry) o;
+                            break;
+                        }
                     }
                 }
+                if (entry == null) {
+                    entry = configEntryBuilder.startSubCategory(s, Lists.newArrayList()).setExpanded(true).setTooltip(splitLine(nestedNode.getComment())).build();
+                    category.addEntry(entry);
+                }
+                addNodeSecondLayer(builder, entry, categoryName + "." + nestedNode.getName(), nestedNode);
             }
-            if (entry == null) {
-                entry = configEntryBuilder.startSubCategory(s, Lists.newArrayList()).setExpanded(true).setTooltip(splitLine(nestedNode.getComment())).build();
-                category.addEntry(entry);
-            }
-            addNodeSecondLayer(builder, entry, categoryName + "." + nestedNode.getName(), nestedNode);
-        });
+        }
     }
     
     private void addNodeSecondLayer(ConfigBuilder builder, SubCategoryListEntry subCategory, String categoryName, ConfigBranch nestedNode) {
-        List<ConfigNode> items = Lists.newArrayList(nestedNode.getItems());
-        {
-            List<ConfigNode> toRemove = Lists.newArrayList();
-            for(ConfigNode item : items) {
-                if (treeEntryMap.containsKey(item)) {
-                    if (treeEntryMap.get(item) != null) {
-                        AbstractConfigListEntry<?> entry = treeEntryMap.get(item).apply(item);
-                        subCategory.getValue().add(entry);
-                        ((List<Element>) subCategory.children()).add(entry);
+        for(ConfigNode item : nestedNode.getItems()) {
+            if (treeEntryMap.containsKey(item)) {
+                appendToSubCategory(subCategory, item, treeEntryMap.get(item));
+            } else if (item instanceof ConfigLeaf<?>) {
+                ConfigLeaf<?> value = (ConfigLeaf<?>) item;
+                appendToSubCategory(subCategory, value, functionMap.get(value.getType()));
+            } else if (item instanceof ConfigBranch) {
+                ConfigBranch branch = (ConfigBranch) item;
+                SubCategoryListEntry entry = appendToSubCategory(subCategory, branch, nestedNestedNode -> {
+                    String s = "config." + modId + "." + categoryName + "." + nestedNestedNode.getName();
+                    for (AbstractConfigListEntry<?> o : subCategory.getValue()) {
+                        if (o instanceof SubCategoryListEntry) {
+                            if (o.getFieldName().equals(s)) {
+                                return (SubCategoryListEntry) o;
+                            }
+                        }
                     }
-                    toRemove.add(item);
-                }
+                    return configEntryBuilder.startSubCategory(s, Lists.newArrayList()).setExpanded(true).setTooltip(splitLine(nestedNestedNode.getComment())).build();
+                });
+                addNodeSecondLayer(builder, entry, categoryName + "." + branch.getName(), branch);
             }
-            items.removeAll(toRemove);
         }
-        {
-            List<ConfigNode> toRemove = Lists.newArrayList();
-            items.stream().filter(item -> item instanceof ConfigLeaf<?>).map(item -> (ConfigLeaf<?>) item).sorted(Comparator.comparing(ConfigLeaf::getName)).forEach(value -> {
-                Class<?> type = value.getType();
-                if (functionMap.containsKey(type)) {
-                    AbstractConfigListEntry<?> entry = functionMap.get(type).apply(value);
-                    subCategory.getValue().add(entry);
-                    ((List<Element>) subCategory.children()).add(entry);
-                    toRemove.add(value);
-                }
-            });
-            items.removeAll(toRemove);
-        }
-        items.stream().filter(item -> item instanceof ConfigBranch).map(item -> (ConfigBranch) item).sorted(Comparator.comparing(ConfigNode::getName)).forEach(nestedNestedNode -> {
-            String s = "config." + modId + "." + categoryName + "." + nestedNestedNode.getName();
-            SubCategoryListEntry entry = null;
-            for(AbstractConfigListEntry<?> o : subCategory.getValue()) {
-                if (o instanceof SubCategoryListEntry) {
-                    if (o.getFieldName().equals(s)) {
-                        entry = (SubCategoryListEntry) o;
-                        break;
-                    }
-                }
-            }
-            if (entry == null) {
-                entry = configEntryBuilder.startSubCategory(s, Lists.newArrayList()).setExpanded(true).setTooltip(splitLine(nestedNestedNode.getComment())).build();
-                subCategory.getValue().add(entry);
-                ((List<Element>) subCategory.children()).add(entry);
-            }
-            addNodeSecondLayer(builder, entry, categoryName + "." + nestedNestedNode.getName(), nestedNestedNode);
-        });
     }
-    
+
+    private <T extends ConfigNode, E extends AbstractConfigListEntry<?>> E appendToSubCategory(SubCategoryListEntry subCategory, T value, Function<T, E> factory) {
+        if (factory != null) {
+            E entry = factory.apply(value);
+            subCategory.getValue().add(entry);
+            ((List<Element>) subCategory.children()).add(entry);
+            return entry;
+        }
+        return null;
+    }
 }
