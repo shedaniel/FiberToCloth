@@ -265,14 +265,22 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
         }
     }
 
-    private <T extends ConfigNode, E extends AbstractConfigListEntry<?>> List<E> appendEntries(List<E> category, T value, Function<T, E> factory) {
+    private <T extends ConfigNode> List<AbstractConfigListEntry<?>> appendEntries(List<AbstractConfigListEntry<?>> category, T value, Function<T, AbstractConfigListEntry<?>> factory) {
         if (factory != null) {
-            E entry = factory.apply(value);
+            AbstractConfigListEntry<?> entry = factory.apply(value);
             if (entry instanceof TooltipListEntry<?>) {
-                String comment = value instanceof Commentable ? ((Commentable) value).getComment() : null;
-                Optional<String[]> tooltip = Optional.ofNullable(comment).map(s -> s.split("\n"));
+                Optional<String[]> rawTooltip = value.getAttributeValue(ClothAttributes.TOOLTIP, String[].class);
+                Optional<String[]> tooltip;
+                if (rawTooltip.isPresent()) {
+                    tooltip = rawTooltip.map(tt -> Arrays.stream(tt).map(s -> I18n.translate(s)).toArray(String[]::new));
+                } else {
+                    String comment = value instanceof Commentable ? ((Commentable) value).getComment() : null;
+                    tooltip = Optional.ofNullable(comment).map(s -> s.split("\n"));
+                }
                 ((TooltipListEntry<?>) entry).setTooltipSupplier(() -> tooltip);
             }
+            value.getAttributeValue(ClothAttributes.PREFIX_TEXT, String.class)
+                    .ifPresent(txt -> category.add(configEntryBuilder.startTextDescription(I18n.translate(txt)).build()));
             category.add(entry);
         }
         return category;
