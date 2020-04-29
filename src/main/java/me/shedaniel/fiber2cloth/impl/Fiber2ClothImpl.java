@@ -243,46 +243,53 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
     
     private void transformNode(ConfigBuilder builder, ConfigBranch configNode) {
         for (ConfigNode item : configNode.getItems()) {
+            ConfigCategory category;
+            List<AbstractConfigListEntry<?>> entries;
             if (treeEntryMap.containsKey(item)) {
-                appendToDefaultCategory(builder, item, treeEntryMap.get(item));
+                category = getOrCreateCategory(builder, getDefaultCategoryKey(), this.node);
+                entries = appendEntries(new ArrayList<>(), item, treeEntryMap.get(item));
             } else if (item instanceof ConfigLeaf<?>) {
                 ConfigLeaf<?> value = (ConfigLeaf<?>) item;
-                appendToDefaultCategory(builder, value, functionMap.get(value.getType()));
+                category = getOrCreateCategory(builder, getDefaultCategoryKey(), this.node);
+                entries = appendEntries(new ArrayList<>(), value, functionMap.get(value.getType()));
             } else if (item instanceof ConfigBranch) {
                 ConfigBranch configBranch = (ConfigBranch) item;
                 String categoryKey = "config." + modId + "." + configBranch.getName();
                 if (builder.hasCategory(categoryKey)) {
                     throw new IllegalStateException("Duplicate category "+ categoryKey);
                 }
-                ConfigCategory category = builder.getOrCreateCategory(categoryKey);
-                configBranch.getAttributeValue(ClothAttributes.CATEGORY_BACKGROUND, Identifier.class).ifPresent(category::setCategoryBackground);
-                transformNodeFirstLayer(configBranch.getName(), configBranch).forEach(category::addEntry);
+                category = getOrCreateCategory(builder, categoryKey, configBranch);
+                entries = transformNodeFirstLayer(configBranch.getName(), configBranch);
+            } else {
+                continue;
             }
+            entries.forEach(category::addEntry);
         }
     }
 
-    private <T extends ConfigNode> void appendToDefaultCategory(ConfigBuilder builder, T value, Function<T, AbstractConfigListEntry<?>> factory) {
+    private <T extends ConfigNode, E extends AbstractConfigListEntry<?>> List<E> appendEntries(List<E> category, T value, Function<T, E> factory) {
         if (factory != null) {
-            AbstractConfigListEntry<?> entry = factory.apply(value);
-            ConfigCategory defaultCategory = builder.getOrCreateCategory(getDefaultCategoryKey());
-            defaultCategory.addEntry(entry);
-            node.getAttributeValue(ClothAttributes.CATEGORY_BACKGROUND, Identifier.class).ifPresent(defaultCategory::setCategoryBackground);
+            E entry = factory.apply(value);
+            category.add(entry);
         }
+        return category;
+    }
+
+    private ConfigCategory getOrCreateCategory(ConfigBuilder builder, String key, ConfigNode node) {
+        ConfigCategory defaultCategory = builder.getOrCreateCategory(key);
+        node.getAttributeValue(ClothAttributes.CATEGORY_BACKGROUND, Identifier.class).ifPresent(defaultCategory::setCategoryBackground);
+        return defaultCategory;
     }
 
     private List<AbstractConfigListEntry<?>> transformNodeFirstLayer(String categoryName, ConfigBranch configNode) {
-        List<AbstractConfigListEntry<?>> category = new ArrayList<>();
+        List<AbstractConfigListEntry<?>> category = new ArrayList<>(configNode.getItems().size());
         for (ConfigNode item : configNode.getItems()) {
             if (treeEntryMap.containsKey(item)) {
-                if (treeEntryMap.get(item) != null) {
-                    category.add(treeEntryMap.get(item).apply(item));
-                }
+                appendEntries(category, configNode, treeEntryMap.get(item));
             } else if (item instanceof ConfigLeaf<?>) {
                 ConfigLeaf<?> value = (ConfigLeaf<?>) item;
                 Class<?> type = value.getType();
-                if (functionMap.containsKey(type)) {
-                    category.add(functionMap.get(type).apply(value));
-                }
+                appendEntries(category, value, functionMap.get(type));
             } else if (item instanceof ConfigBranch) {
                 ConfigBranch nestedNode = (ConfigBranch) item;
                 String s = "config." + modId + "." + categoryName + "." + nestedNode.getName();
@@ -300,19 +307,13 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
     
     @SuppressWarnings("rawtypes")
     private List<AbstractConfigListEntry> transformSecondLayerNode(String categoryName, ConfigBranch nestedNode) {
-        List<AbstractConfigListEntry> entries = new ArrayList<>();
+        List<AbstractConfigListEntry<?>> entries = new ArrayList<>(nestedNode.getItems().size());
         for(ConfigNode item : nestedNode.getItems()) {
             if (treeEntryMap.containsKey(item)) {
-                Function<ConfigNode, AbstractConfigListEntry<?>> factory = treeEntryMap.get(item);
-                if (factory != null) {
-                    entries.add(factory.apply(item));
-                }
+                appendEntries(entries, nestedNode, treeEntryMap.get(item));
             } else if (item instanceof ConfigLeaf<?>) {
                 ConfigLeaf<?> value = (ConfigLeaf<?>) item;
-                Function<ConfigLeaf<?>, AbstractConfigListEntry<?>> factory = functionMap.get(value.getType());
-                if (factory != null) {
-                    entries.add(factory.apply(value));
-                }
+                appendEntries(entries, value, functionMap.get(value.getType()));
             } else if (item instanceof ConfigBranch) {
                 ConfigBranch nestedNestedNode = (ConfigBranch) item;
                 String s = "config." + modId + "." + categoryName + "." + nestedNestedNode.getName();
@@ -323,6 +324,7 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
                 entries.add(entry);
             }
         }
-        return entries;
+        @SuppressWarnings("unchecked") List<AbstractConfigListEntry> ret = (List<AbstractConfigListEntry>) (List<?>) entries;
+        return ret;
     }
 }
