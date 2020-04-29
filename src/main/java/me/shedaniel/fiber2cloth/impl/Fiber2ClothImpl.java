@@ -2,11 +2,15 @@ package me.shedaniel.fiber2cloth.impl;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import me.shedaniel.clothconfig2.api.*;
-import me.shedaniel.clothconfig2.gui.entries.SubCategoryListEntry;
+import me.shedaniel.clothconfig2.api.AbstractConfigListEntry;
+import me.shedaniel.clothconfig2.api.ConfigBuilder;
+import me.shedaniel.clothconfig2.api.ConfigCategory;
+import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
+import me.shedaniel.clothconfig2.gui.entries.TooltipListEntry;
 import me.shedaniel.fiber2cloth.api.ClothAttributes;
 import me.shedaniel.fiber2cloth.api.Fiber2Cloth;
 import me.zeroeightsix.fiber.api.constraint.Constraint;
+import me.zeroeightsix.fiber.api.tree.Commentable;
 import me.zeroeightsix.fiber.api.tree.ConfigBranch;
 import me.zeroeightsix.fiber.api.tree.ConfigLeaf;
 import me.zeroeightsix.fiber.api.tree.ConfigNode;
@@ -42,12 +46,6 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
         initDefaultFunctionMap();
     }
 
-    private static String[] splitLine(String s) {
-        if (s == null)
-            return null;
-        return s.split("\n");
-    }
-    
     private static <T> List<T> list(T[] o) {
         if (o == null)
             return Lists.newArrayList();
@@ -124,21 +122,21 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
     }
 
     private void initDefaultFunctionMap() {
-        Function<ConfigLeaf<Integer>, AbstractConfigListEntry<Integer>> intFunc = configValue -> configEntryBuilder.startIntField("config." + modId + "." + configValue.getName(), configValue.getValue()).setDefaultValue(configValue.getDefaultValue()).setTooltip(splitLine(configValue.getComment())).setSaveConsumer(configValue::setValue).setErrorSupplier(var -> error(configValue.getConstraints(), var, Integer.class)).build();
+        Function<ConfigLeaf<Integer>, AbstractConfigListEntry<Integer>> intFunc = configValue -> configEntryBuilder.startIntField("config." + modId + "." + configValue.getName(), configValue.getValue()).setDefaultValue(configValue.getDefaultValue()).setSaveConsumer(configValue::setValue).setErrorSupplier(var -> error(configValue.getConstraints(), var, Integer.class)).build();
         putFunction(Integer.class, intFunc);
         putFunction(int.class, intFunc);
-        Function<ConfigLeaf<Long>, AbstractConfigListEntry<Long>> longFunc = configValue -> configEntryBuilder.startLongField("config." + modId + "." + configValue.getName(), configValue.getValue()).setDefaultValue(configValue.getDefaultValue()).setTooltip(splitLine(configValue.getComment())).setSaveConsumer(configValue::setValue).setErrorSupplier(var -> error(configValue.getConstraints(), var, Long.class)).build();
+        Function<ConfigLeaf<Long>, AbstractConfigListEntry<Long>> longFunc = configValue -> configEntryBuilder.startLongField("config." + modId + "." + configValue.getName(), configValue.getValue()).setDefaultValue(configValue.getDefaultValue()).setSaveConsumer(configValue::setValue).setErrorSupplier(var -> error(configValue.getConstraints(), var, Long.class)).build();
         putFunction(Long.class, longFunc);
         putFunction(long.class, longFunc);
-        Function<ConfigLeaf<Double>, AbstractConfigListEntry<Double>> doubleFunc = configValue -> configEntryBuilder.startDoubleField("config." + modId + "." + configValue.getName(), configValue.getValue()).setDefaultValue(configValue.getDefaultValue()).setTooltip(splitLine(configValue.getComment())).setSaveConsumer(configValue::setValue).setErrorSupplier(var -> error(configValue.getConstraints(), var, Double.class)).build();
+        Function<ConfigLeaf<Double>, AbstractConfigListEntry<Double>> doubleFunc = configValue -> configEntryBuilder.startDoubleField("config." + modId + "." + configValue.getName(), configValue.getValue()).setDefaultValue(configValue.getDefaultValue()).setSaveConsumer(configValue::setValue).setErrorSupplier(var -> error(configValue.getConstraints(), var, Double.class)).build();
         putFunction(Double.class, doubleFunc);
         putFunction(double.class, doubleFunc);
-        Function<ConfigLeaf<Float>, AbstractConfigListEntry<Float>> floatFunc = configValue -> configEntryBuilder.startFloatField("config." + modId + "." + configValue.getName(), configValue.getValue()).setDefaultValue(configValue.getDefaultValue()).setTooltip(splitLine(configValue.getComment())).setSaveConsumer(configValue::setValue).setErrorSupplier(var -> error(configValue.getConstraints(), var, Float.class)).build();
+        Function<ConfigLeaf<Float>, AbstractConfigListEntry<Float>> floatFunc = configValue -> configEntryBuilder.startFloatField("config." + modId + "." + configValue.getName(), configValue.getValue()).setDefaultValue(configValue.getDefaultValue()).setSaveConsumer(configValue::setValue).setErrorSupplier(var -> error(configValue.getConstraints(), var, Float.class)).build();
         putFunction(Float.class, floatFunc);
         putFunction(float.class, floatFunc);
         Function<ConfigLeaf<Boolean>, AbstractConfigListEntry<Boolean>> boolFunc = configValue -> {
             String s = "config." + modId + "." + configValue.getName();
-            return configEntryBuilder.startBooleanToggle(s, configValue.getValue()).setDefaultValue(configValue.getDefaultValue()).setTooltip(splitLine(configValue.getComment())).setSaveConsumer(configValue::setValue).setErrorSupplier(var -> error(configValue.getConstraints(), var, Boolean.class)).setYesNoTextSupplier(bool -> {
+            return configEntryBuilder.startBooleanToggle(s, configValue.getValue()).setDefaultValue(configValue.getDefaultValue()).setSaveConsumer(configValue::setValue).setErrorSupplier(var -> error(configValue.getConstraints(), var, Boolean.class)).setYesNoTextSupplier(bool -> {
                 if (I18n.hasTranslation(s + ".boolean." + bool))
                     return I18n.translate(s + ".boolean." + bool);
                 return bool ? "§aYes" : "§cNo";
@@ -146,12 +144,12 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
         };
         putFunction(Boolean.class, boolFunc);
         putFunction(boolean.class, boolFunc);
-        putFunction(String.class, configValue -> configEntryBuilder.startStrField("config." + modId + "." + configValue.getName(), configValue.getValue()).setDefaultValue(configValue.getDefaultValue()).setTooltip(splitLine(configValue.getComment())).setSaveConsumer(configValue::setValue).setErrorSupplier(var -> error(configValue.getConstraints(), var, String.class)).build());
-        putListFunction(Integer[].class, configValue -> configEntryBuilder.startIntList("config." + modId + "." + configValue.getName(), Lists.newArrayList(configValue.getValue())).setDefaultValue(list(configValue.getDefaultValue())).setTooltip(splitLine(configValue.getComment())).setExpanded(true).setSaveConsumer(var -> configValue.setValue(var.toArray(new Integer[0]))).setErrorSupplier(var -> error(configValue.getConstraints(), var.toArray(new Integer[0]), Integer[].class)).build());
-        putListFunction(Long[].class, configValue -> configEntryBuilder.startLongList("config." + modId + "." + configValue.getName(), Lists.newArrayList(configValue.getValue())).setDefaultValue(list(configValue.getDefaultValue())).setTooltip(splitLine(configValue.getComment())).setExpanded(true).setSaveConsumer(var -> configValue.setValue(var.toArray(new Long[0]))).setErrorSupplier(var -> error(configValue.getConstraints(), var.toArray(new Long[0]), Long[].class)).build());
-        putListFunction(Double[].class, configValue -> configEntryBuilder.startDoubleList("config." + modId + "." + configValue.getName(), Lists.newArrayList(configValue.getValue())).setDefaultValue(list(configValue.getDefaultValue())).setTooltip(splitLine(configValue.getComment())).setExpanded(true).setSaveConsumer(var -> configValue.setValue(var.toArray(new Double[0]))).setErrorSupplier(var -> error(configValue.getConstraints(), var.toArray(new Double[0]), Double[].class)).build());
-        putListFunction(Float[].class, configValue -> configEntryBuilder.startFloatList("config." + modId + "." + configValue.getName(), Lists.newArrayList(configValue.getValue())).setDefaultValue(list(configValue.getDefaultValue())).setTooltip(splitLine(configValue.getComment())).setExpanded(true).setSaveConsumer(var -> configValue.setValue(var.toArray(new Float[0]))).setErrorSupplier(var -> error(configValue.getConstraints(), var.toArray(new Float[0]), Float[].class)).build());
-        putListFunction(String[].class, configValue -> configEntryBuilder.startStrList("config." + modId + "." + configValue.getName(), Lists.newArrayList(configValue.getValue())).setDefaultValue(list(configValue.getDefaultValue())).setTooltip(splitLine(configValue.getComment())).setExpanded(true).setSaveConsumer(var -> configValue.setValue(var.toArray(new String[0]))).setErrorSupplier(var -> error(configValue.getConstraints(), var.toArray(new String[0]), String[].class)).build());
+        putFunction(String.class, configValue -> configEntryBuilder.startStrField("config." + modId + "." + configValue.getName(), configValue.getValue()).setDefaultValue(configValue.getDefaultValue()).setSaveConsumer(configValue::setValue).setErrorSupplier(var -> error(configValue.getConstraints(), var, String.class)).build());
+        putListFunction(Integer[].class, configValue -> configEntryBuilder.startIntList("config." + modId + "." + configValue.getName(), Lists.newArrayList(configValue.getValue())).setDefaultValue(list(configValue.getDefaultValue())).setExpanded(true).setSaveConsumer(var -> configValue.setValue(var.toArray(new Integer[0]))).setErrorSupplier(var -> error(configValue.getConstraints(), var.toArray(new Integer[0]), Integer[].class)).build());
+        putListFunction(Long[].class, configValue -> configEntryBuilder.startLongList("config." + modId + "." + configValue.getName(), Lists.newArrayList(configValue.getValue())).setDefaultValue(list(configValue.getDefaultValue())).setExpanded(true).setSaveConsumer(var -> configValue.setValue(var.toArray(new Long[0]))).setErrorSupplier(var -> error(configValue.getConstraints(), var.toArray(new Long[0]), Long[].class)).build());
+        putListFunction(Double[].class, configValue -> configEntryBuilder.startDoubleList("config." + modId + "." + configValue.getName(), Lists.newArrayList(configValue.getValue())).setDefaultValue(list(configValue.getDefaultValue())).setExpanded(true).setSaveConsumer(var -> configValue.setValue(var.toArray(new Double[0]))).setErrorSupplier(var -> error(configValue.getConstraints(), var.toArray(new Double[0]), Double[].class)).build());
+        putListFunction(Float[].class, configValue -> configEntryBuilder.startFloatList("config." + modId + "." + configValue.getName(), Lists.newArrayList(configValue.getValue())).setDefaultValue(list(configValue.getDefaultValue())).setExpanded(true).setSaveConsumer(var -> configValue.setValue(var.toArray(new Float[0]))).setErrorSupplier(var -> error(configValue.getConstraints(), var.toArray(new Float[0]), Float[].class)).build());
+        putListFunction(String[].class, configValue -> configEntryBuilder.startStrList("config." + modId + "." + configValue.getName(), Lists.newArrayList(configValue.getValue())).setDefaultValue(list(configValue.getDefaultValue())).setExpanded(true).setSaveConsumer(var -> configValue.setValue(var.toArray(new String[0]))).setErrorSupplier(var -> error(configValue.getConstraints(), var.toArray(new String[0]), String[].class)).build());
     }
     
     @Override
@@ -270,6 +268,11 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
     private <T extends ConfigNode, E extends AbstractConfigListEntry<?>> List<E> appendEntries(List<E> category, T value, Function<T, E> factory) {
         if (factory != null) {
             E entry = factory.apply(value);
+            if (entry instanceof TooltipListEntry<?>) {
+                String comment = value instanceof Commentable ? ((Commentable) value).getComment() : null;
+                Optional<String[]> tooltip = Optional.ofNullable(comment).map(s -> s.split("\n"));
+                ((TooltipListEntry<?>) entry).setTooltipSupplier(() -> tooltip);
+            }
             category.add(entry);
         }
         return category;
@@ -292,14 +295,10 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
                 appendEntries(category, value, functionMap.get(type));
             } else if (item instanceof ConfigBranch) {
                 ConfigBranch nestedNode = (ConfigBranch) item;
-                String s = "config." + modId + "." + categoryName + "." + nestedNode.getName();
-                assert category.stream().noneMatch(o -> o instanceof SubCategoryListEntry && o.getFieldName().equals(s))
-                        : "duplicate subcategory " + s;
-                SubCategoryListEntry entry = configEntryBuilder.startSubCategory(
-                        s,
+                appendEntries(category, nestedNode, n -> configEntryBuilder.startSubCategory(
+                        "config." + modId + "." + categoryName + "." + nestedNode.getName(),
                         transformSecondLayerNode(categoryName + "." + nestedNode.getName(), nestedNode)
-                ).setExpanded(true).setTooltip(splitLine(nestedNode.getComment())).build();
-                category.add(entry);
+                ).setExpanded(true).build());
             }
         }
         return category;
@@ -315,13 +314,11 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
                 ConfigLeaf<?> value = (ConfigLeaf<?>) item;
                 appendEntries(entries, value, functionMap.get(value.getType()));
             } else if (item instanceof ConfigBranch) {
-                ConfigBranch nestedNestedNode = (ConfigBranch) item;
-                String s = "config." + modId + "." + categoryName + "." + nestedNestedNode.getName();
-                SubCategoryListEntry entry = configEntryBuilder.startSubCategory(
-                        s,
+                ConfigBranch branch = (ConfigBranch) item;
+                appendEntries(entries, branch, nestedNestedNode -> configEntryBuilder.startSubCategory(
+                        "config." + modId + "." + categoryName + "." + nestedNestedNode.getName(),
                         transformSecondLayerNode(categoryName + "." + nestedNestedNode.getName(), nestedNestedNode)
-                ).setExpanded(true).setTooltip(splitLine(nestedNestedNode.getComment())).build();
-                entries.add(entry);
+                ).setExpanded(true).build());
             }
         }
         @SuppressWarnings("unchecked") List<AbstractConfigListEntry> ret = (List<AbstractConfigListEntry>) (List<?>) entries;
