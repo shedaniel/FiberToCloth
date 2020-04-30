@@ -4,7 +4,6 @@ import me.zeroeightsix.fiber.api.FiberId;
 import me.zeroeightsix.fiber.api.tree.ConfigAttribute;
 import net.minecraft.util.Identifier;
 
-import java.util.Collections;
 import java.util.stream.IntStream;
 
 public final class ClothAttributes {
