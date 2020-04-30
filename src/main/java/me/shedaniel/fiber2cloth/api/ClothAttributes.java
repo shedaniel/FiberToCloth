@@ -9,18 +9,18 @@ import java.util.stream.IntStream;
 public final class ClothAttributes {
     private ClothAttributes() {}
 
-    public static final FiberId BACKGROUND = id("background");
+    public static final FiberId DEFAULT_BACKGROUND = id("background");
     public static final FiberId CATEGORY_BACKGROUND = id("category_background");
     public static final FiberId PREFIX_TEXT = id("prefix_text");
     public static final FiberId TOOLTIP = id("tooltip");
     public static final FiberId TRANSITIVE = id("transitive");
 
-    public static ConfigAttribute<Identifier> background(String backgroundLocation) {
-        return ConfigAttribute.create(BACKGROUND, Identifier.class, new Identifier(backgroundLocation));
+    public static ConfigAttribute<Identifier> defaultBackground(String backgroundLocation) {
+        return ConfigAttribute.create(DEFAULT_BACKGROUND, Identifier.class, new Identifier(backgroundLocation));
     }
 
-    public static ConfigAttribute<Identifier> background(Identifier backgroundLocation) {
-        return ConfigAttribute.create(BACKGROUND, Identifier.class, backgroundLocation);
+    public static ConfigAttribute<Identifier> defaultBackground(Identifier backgroundLocation) {
+        return ConfigAttribute.create(DEFAULT_BACKGROUND, Identifier.class, backgroundLocation);
     }
 
     public static ConfigAttribute<Identifier> categoryBackground(Identifier backgroundLocation) {
