@@ -306,10 +306,16 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
     }
 
     private void appendSubCategory(String categoryName, List<AbstractConfigListEntry<?>> entries, ConfigBranch nestedNode) {
-        appendEntries(entries, nestedNode, n -> configEntryBuilder.startSubCategory(
-                    "config." + modId + "." + (categoryName + "." + nestedNode.getName()),
-                    transformNodeSecondLayer(categoryName + "." + nestedNode.getName(), n)
+        String subCategoryName = categoryName + "." + nestedNode.getName();
+        if (nestedNode.getAttributeValue(ClothAttributes.TRANSITIVE, Boolean.class).orElse(false)) {
+            // no addAll because raw types
+            transformNodeSecondLayer(subCategoryName, nestedNode).forEach(entries::add);
+        } else {
+            appendEntries(entries, nestedNode, n -> configEntryBuilder.startSubCategory(
+                    "config." + modId + "." + subCategoryName,
+                    transformNodeSecondLayer(subCategoryName, n)
             ).setExpanded(true).build());
+        }
     }
 
     private <T extends ConfigNode> List<AbstractConfigListEntry<?>> appendEntries(List<AbstractConfigListEntry<?>> category, T value, Function<T, AbstractConfigListEntry<?>> factory) {

@@ -13,6 +13,7 @@ public final class ClothAttributes {
     public static final FiberId CATEGORY_BACKGROUND = id("category_background");
     public static final FiberId PREFIX_TEXT = id("prefix_text");
     public static final FiberId TOOLTIP = id("tooltip");
+    public static final FiberId TRANSITIVE = id("transitive");
 
     public static ConfigAttribute<Identifier> background(String backgroundLocation) {
         return ConfigAttribute.create(BACKGROUND, Identifier.class, new Identifier(backgroundLocation));
@@ -40,6 +41,10 @@ public final class ClothAttributes {
 
     public static ConfigAttribute<String[]> tooltip(String... tooltipKeys) {
         return ConfigAttribute.create(TOOLTIP, String[].class, tooltipKeys);
+    }
+
+    public static ConfigAttribute<Boolean> transitive() {
+        return ConfigAttribute.create(TRANSITIVE, Boolean.class, true);
     }
 
     private static FiberId id(String name) {
