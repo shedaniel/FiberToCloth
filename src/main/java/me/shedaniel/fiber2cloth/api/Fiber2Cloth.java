@@ -2,9 +2,11 @@ package me.shedaniel.fiber2cloth.api;
 
 import me.shedaniel.clothconfig2.api.AbstractConfigListEntry;
 import me.shedaniel.fiber2cloth.impl.FakeFiber2Cloth;
-import me.zeroeightsix.fiber.api.tree.ConfigBranch;
-import me.zeroeightsix.fiber.api.tree.ConfigLeaf;
-import me.zeroeightsix.fiber.api.tree.ConfigNode;
+import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.SerializableType;
+import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.derived.ConfigType;
+import io.github.fablabsmc.fablabs.api.fiber.v1.tree.ConfigBranch;
+import io.github.fablabsmc.fablabs.api.fiber.v1.tree.ConfigLeaf;
+import io.github.fablabsmc.fablabs.api.fiber.v1.tree.ConfigNode;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resource.language.I18n;
 
@@ -34,12 +36,7 @@ public interface Fiber2Cloth {
     Fiber2Cloth setDefaultCategoryNode(ConfigBranch defaultCategoryNode);
     
     Fiber2Cloth setSaveRunnable(Runnable saveRunnable);
-    
-    default Fiber2Cloth registerNodeEntryFunction(ConfigBranch node, Function function) {
-        registerTreeEntryFunction(node, function);
-        return this;
-    }
-    
+
     default Fiber2Cloth hideNode(ConfigBranch node) {
         hideTreeEntry(node);
         return this;
@@ -51,11 +48,12 @@ public interface Fiber2Cloth {
     }
     
     Fiber2Cloth registerTreeEntryFunction(ConfigNode item, Function<ConfigNode, AbstractConfigListEntry<?>> function);
-    
-    Fiber2Cloth registerNodeEntryFunction(Class<?> clazz, Function<ConfigLeaf<?>, AbstractConfigListEntry<?>> function);
-    
-    Map<Class<?>, Function<ConfigLeaf<?>, AbstractConfigListEntry<?>>> getFunctionMap();
-    
+
+    <R, S, T extends SerializableType<S>> Fiber2Cloth registerLeafEntryFunction(ConfigType<R, S, T> type, GuiEntryProvider<R, S, T> function);
+
+    Map<Class<? extends SerializableType<?>>, Function<ConfigLeaf<?>, AbstractConfigListEntry<?>>> getFunctionMap();
+
+
     ConfigBranch getNode();
     
     Screen getParentScreen();

@@ -1,9 +1,12 @@
 package me.shedaniel.fiber2cloth.api;
 
-import me.zeroeightsix.fiber.api.FiberId;
-import me.zeroeightsix.fiber.api.tree.ConfigAttribute;
+import io.github.fablabsmc.fablabs.api.fiber.v1.FiberId;
+import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.derived.ConfigTypes;
+import io.github.fablabsmc.fablabs.api.fiber.v1.tree.ConfigAttribute;
+import me.shedaniel.fiber2cloth.impl.Fiber2ClothImpl;
 import net.minecraft.util.Identifier;
 
+import java.util.List;
 import java.util.stream.IntStream;
 
 public final class ClothAttributes {
@@ -15,36 +18,36 @@ public final class ClothAttributes {
     public static final FiberId TOOLTIP = id("tooltip");
     public static final FiberId TRANSITIVE = id("transitive");
 
-    public static ConfigAttribute<Identifier> defaultBackground(String backgroundLocation) {
-        return ConfigAttribute.create(DEFAULT_BACKGROUND, Identifier.class, new Identifier(backgroundLocation));
+    public static ConfigAttribute<String> defaultBackground(String backgroundLocation) {
+        return ConfigAttribute.create(DEFAULT_BACKGROUND, Fiber2ClothImpl.IDENTIFIER_TYPE.getSerializedType(), backgroundLocation);
     }
 
-    public static ConfigAttribute<Identifier> defaultBackground(Identifier backgroundLocation) {
-        return ConfigAttribute.create(DEFAULT_BACKGROUND, Identifier.class, backgroundLocation);
+    public static ConfigAttribute<String> defaultBackground(Identifier backgroundLocation) {
+        return ConfigAttribute.create(DEFAULT_BACKGROUND, Fiber2ClothImpl.IDENTIFIER_TYPE, backgroundLocation);
     }
 
-    public static ConfigAttribute<Identifier> categoryBackground(Identifier backgroundLocation) {
-        return ConfigAttribute.create(CATEGORY_BACKGROUND, Identifier.class, backgroundLocation);
+    public static ConfigAttribute<String> categoryBackground(String backgroundLocation) {
+        return ConfigAttribute.create(CATEGORY_BACKGROUND, Fiber2ClothImpl.IDENTIFIER_TYPE.getSerializedType(), backgroundLocation);
     }
 
-    public static ConfigAttribute<Identifier> categoryBackground(String backgroundLocation) {
-        return ConfigAttribute.create(CATEGORY_BACKGROUND, Identifier.class, new Identifier(backgroundLocation));
+    public static ConfigAttribute<String> categoryBackground(Identifier backgroundLocation) {
+        return ConfigAttribute.create(CATEGORY_BACKGROUND, Fiber2ClothImpl.IDENTIFIER_TYPE, backgroundLocation);
     }
 
     public static ConfigAttribute<String> prefixText(String prefixKey) {
-        return ConfigAttribute.create(PREFIX_TEXT, String.class, prefixKey);
+        return ConfigAttribute.create(PREFIX_TEXT, ConfigTypes.STRING, prefixKey);
     }
 
-    public static ConfigAttribute<String[]> tooltip(String baseKey, int numberOfLines) {
+    public static ConfigAttribute<List<String>> tooltip(String baseKey, int numberOfLines) {
         return tooltip(IntStream.range(1, numberOfLines + 1).mapToObj(i -> baseKey + i).toArray(String[]::new));
     }
 
-    public static ConfigAttribute<String[]> tooltip(String... tooltipKeys) {
-        return ConfigAttribute.create(TOOLTIP, String[].class, tooltipKeys);
+    public static ConfigAttribute<List<String>> tooltip(String... tooltipKeys) {
+        return ConfigAttribute.create(TOOLTIP, ConfigTypes.makeArray(ConfigTypes.STRING), tooltipKeys);
     }
 
     public static ConfigAttribute<Boolean> transitive() {
-        return ConfigAttribute.create(TRANSITIVE, Boolean.class, true);
+        return ConfigAttribute.create(TRANSITIVE, ConfigTypes.BOOLEAN, true);
     }
 
     private static FiberId id(String name) {

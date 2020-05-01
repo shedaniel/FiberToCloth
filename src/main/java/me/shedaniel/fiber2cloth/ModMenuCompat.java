@@ -1,17 +1,23 @@
 package me.shedaniel.fiber2cloth;
 
+import blue.endless.jankson.Comment;
 import io.github.prospector.modmenu.api.ConfigScreenFactory;
 import io.github.prospector.modmenu.api.ModMenuApi;
 import me.shedaniel.fiber2cloth.api.ClothAttributes;
 import me.shedaniel.fiber2cloth.api.ClothSetting;
 import me.shedaniel.fiber2cloth.api.Fiber2Cloth;
-import me.zeroeightsix.fiber.api.annotation.Setting;
-import me.zeroeightsix.fiber.api.exception.FiberException;
-import me.zeroeightsix.fiber.api.exception.RuntimeFiberException;
-import me.zeroeightsix.fiber.api.tree.ConfigBranch;
-import me.zeroeightsix.fiber.api.tree.ConfigTree;
+import io.github.fablabsmc.fablabs.api.fiber.v1.annotation.AnnotatedSettings;
+import io.github.fablabsmc.fablabs.api.fiber.v1.annotation.Setting;
+import io.github.fablabsmc.fablabs.api.fiber.v1.exception.FiberException;
+import io.github.fablabsmc.fablabs.api.fiber.v1.exception.RuntimeFiberException;
+import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.derived.ConfigType;
+import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.derived.ConfigTypes;
+import io.github.fablabsmc.fablabs.api.fiber.v1.tree.ConfigBranch;
+import io.github.fablabsmc.fablabs.api.fiber.v1.tree.ConfigTree;
 import net.minecraft.util.Identifier;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class ModMenuCompat implements ModMenuApi {
@@ -40,31 +46,24 @@ public class ModMenuCompat implements ModMenuApi {
         ConfigBranch cfg;
         cfg = ConfigTree.builder()
                 .withAttribute(ClothAttributes.defaultBackground("minecraft:textures/block/oak_planks.png"))
-                .applyFromPojo(new Pojo())
-                // adding a field directly to the root will cause it to be added to a "default" category
-                .beginValue("basicIntField", Integer.class, 100)
-                    .withComment("This field will accept 0 - 100.")
-                    .beginConstraints()
-                    .atLeast(0).atMost(100)
-                    .finishConstraints()
-                .finishValue()
+                .applyFromPojo(new Pojo(), AnnotatedSettings.create().registerTypeMapping(Pojo.SecondCategory.Choice.class, ConfigTypes.makeEnum(Pojo.SecondCategory.Choice.class)))
                 .fork("second.category")
                     .withAttribute(ClothAttributes.categoryBackground("minecraft:textures/block/stone.png"))
-                    .withValue("nestedExample", String.class, "Hi")
+                    .withValue("nestedExample", ConfigTypes.STRING, "Hi")
                     .fork("i.am.inside")
                         .fork("i.am.inside.but.hidden")
                             .withAttribute(ClothAttributes.transitive())
-                            .withValue("transitiveExample", Double[].class, new Double[0])
+                            .withValue("transitiveExample", ConfigTypes.makeList(ConfigTypes.DOUBLE), Collections.emptyList())
                         .finishBranch()
-                        .beginValue("nestedNestedExample", Boolean.class, false)
+                        .beginValue("nestedNestedExample", ConfigTypes.BOOLEAN, false)
                             .withComment("This comment is overridden by the tooltip")
                             .withAttribute(ClothAttributes.tooltip("config.fiber2cloth.nestedNestedExample.tooltip.", 2))
                         .finishValue()
-                        .beginAggregateValue("nestedNestedList", new String[] {"hi", "no"})
+                        .beginValue("nestedNestedList", ConfigTypes.makeList(ConfigTypes.STRING), Arrays.asList("hi", "no"))
                             .withAttribute(ClothAttributes.prefixText("config.fiber2cloth.nestedNestedList.description"))
                         .finishValue()
                         .fork("lol")
-                            .withValue("exampleBool", Boolean.class, false)
+                            .withValue("exampleBool", ConfigTypes.BOOLEAN, false)
                         .finishBranch()
                     .finishBranch()
                 .finishBranch()
@@ -73,6 +72,12 @@ public class ModMenuCompat implements ModMenuApi {
     }
 
     private static class Pojo {
+
+        // adding a field directly to the root will cause it to be added to a "default" category
+        @Setting.Constrain.Range(min = 0, max = 100)
+        @Comment("This field will accept 0 - 100.")
+        public int basicIntField = 100;
+
         @Setting.Group
         @ClothSetting.CategoryBackground("minecraft:textures/block/bricks.png")
         public FirstCategory firstCategory = new FirstCategory();
