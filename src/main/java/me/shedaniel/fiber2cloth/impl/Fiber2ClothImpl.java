@@ -361,7 +361,7 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
     }
 
     private <T extends ConfigNode> List<AbstractConfigListEntry<?>> appendEntries(List<AbstractConfigListEntry<?>> category, T value, Function<T, AbstractConfigListEntry<?>> factory) {
-        if (factory != null) {
+        if (factory != null && !value.getAttributeValue(ClothAttributes.EXCLUDED, ConfigTypes.BOOLEAN).orElse(false)) {
             AbstractConfigListEntry<?> entry = factory.apply(value);
             if (entry instanceof TooltipListEntry<?>) {
                 Optional<List<String>> rawTooltip = value.getAttributeValue(ClothAttributes.TOOLTIP, ConfigTypes.makeList(ConfigTypes.STRING));

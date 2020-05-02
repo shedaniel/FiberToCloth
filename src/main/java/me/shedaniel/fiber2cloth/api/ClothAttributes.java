@@ -14,6 +14,7 @@ public final class ClothAttributes {
 
     public static final FiberId DEFAULT_BACKGROUND = id("background");
     public static final FiberId CATEGORY_BACKGROUND = id("category_background");
+    public static final FiberId EXCLUDED = id("excluded");
     public static final FiberId PREFIX_TEXT = id("prefix_text");
     public static final FiberId TOOLTIP = id("tooltip");
     public static final FiberId TRANSITIVE = id("transitive");
@@ -32,6 +33,10 @@ public final class ClothAttributes {
 
     public static ConfigAttribute<String> categoryBackground(Identifier backgroundLocation) {
         return ConfigAttribute.create(CATEGORY_BACKGROUND, Fiber2ClothImpl.IDENTIFIER_TYPE, backgroundLocation);
+    }
+
+    public static ConfigAttribute<Boolean> excluded() {
+        return ConfigAttribute.create(EXCLUDED, ConfigTypes.BOOLEAN, true);
     }
 
     public static ConfigAttribute<String> prefixText(String prefixKey) {
