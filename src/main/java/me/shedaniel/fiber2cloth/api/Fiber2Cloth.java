@@ -1,5 +1,6 @@
 package me.shedaniel.fiber2cloth.api;
 
+import io.github.fablabsmc.fablabs.api.fiber.v1.annotation.AnnotatedSettings;
 import me.shedaniel.clothconfig2.api.AbstractConfigListEntry;
 import me.shedaniel.fiber2cloth.impl.FakeFiber2Cloth;
 import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.SerializableType;
@@ -7,6 +8,7 @@ import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.derived.ConfigType;
 import io.github.fablabsmc.fablabs.api.fiber.v1.tree.ConfigBranch;
 import io.github.fablabsmc.fablabs.api.fiber.v1.tree.ConfigLeaf;
 import io.github.fablabsmc.fablabs.api.fiber.v1.tree.ConfigNode;
+import me.shedaniel.fiber2cloth.impl.annotation.Fiber2ClothAnnotations;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resource.language.I18n;
 
@@ -17,6 +19,14 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public interface Fiber2Cloth {
+
+    /**
+     * Configures an {@link AnnotatedSettings} object to recognize Fiber2Cloth annotations.
+     */
+    static AnnotatedSettings configure(AnnotatedSettings settings) {
+        Fiber2ClothAnnotations.configure(settings);
+        return settings;
+    }
     
     static Fiber2Cloth create(Screen parentScreen, String modId, ConfigBranch node, String title) {
         try {

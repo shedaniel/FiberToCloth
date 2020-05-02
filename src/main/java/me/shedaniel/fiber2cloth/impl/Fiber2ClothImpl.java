@@ -293,13 +293,18 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
                 category = getOrCreateCategory(builder, getDefaultCategoryKey(), this.node);
                 entries = appendEntries(new ArrayList<>(), value, functionMap.get(value.getConfigType().getClass()));
             } else if (item instanceof ConfigBranch) {
-                ConfigBranch configBranch = (ConfigBranch) item;
-                String categoryKey = getFieldNameKey(configBranch.getName());
-                if (builder.hasCategory(categoryKey)) {
-                    throw new IllegalStateException("Duplicate category "+ categoryKey);
+                ConfigBranch branch = (ConfigBranch) item;
+                if (branch.getAttributeValue(ClothAttributes.GROUP_DISPLAY, GroupDisplay.TYPE).orElse(GroupDisplay.DEFAULT).isCategoryCandidate()) {
+                    String categoryKey = getFieldNameKey(branch.getName());
+                    if (builder.hasCategory(categoryKey)) {
+                        throw new IllegalStateException("Duplicate category "+ categoryKey);
+                    }
+                    category = getOrCreateCategory(builder, categoryKey, branch);
+                    entries = transformNodeFirstLayer(branch.getName(), branch);
+                } else {
+                    category = getOrCreateCategory(builder, getDefaultCategoryKey(), this.node);
+                    entries = appendSubCategory("", new ArrayList<>(), branch);
                 }
-                category = getOrCreateCategory(builder, categoryKey, configBranch);
-                entries = transformNodeFirstLayer(configBranch.getName(), configBranch);
             } else {
                 continue;
             }
@@ -347,17 +352,19 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
         return ret;
     }
 
-    private void appendSubCategory(String categoryName, List<AbstractConfigListEntry<?>> entries, ConfigBranch nestedNode) {
+    private List<AbstractConfigListEntry<?>> appendSubCategory(String categoryName, List<AbstractConfigListEntry<?>> entries, ConfigBranch nestedNode) {
         String subCategoryName = categoryName + "." + nestedNode.getName();
-        if (nestedNode.getAttributeValue(ClothAttributes.TRANSITIVE, ConfigTypes.BOOLEAN).orElse(false)) {
+        GroupDisplay groupDisplay = nestedNode.getAttributeValue(ClothAttributes.GROUP_DISPLAY, GroupDisplay.TYPE).orElse(GroupDisplay.DEFAULT);
+        if (groupDisplay.isTransitive()) {
             // no addAll because raw types
             transformNodeSecondLayer(subCategoryName, nestedNode).forEach(entries::add);
         } else {
             appendEntries(entries, nestedNode, n -> configEntryBuilder.startSubCategory(
                     getFieldNameKey(subCategoryName),
                     transformNodeSecondLayer(subCategoryName, n)
-            ).setExpanded(true).build());
+            ).setExpanded(groupDisplay == GroupDisplay.COLLAPSIBLE_EXPANDED).build());
         }
+        return entries;
     }
 
     private <T extends ConfigNode> List<AbstractConfigListEntry<?>> appendEntries(List<AbstractConfigListEntry<?>> category, T value, Function<T, AbstractConfigListEntry<?>> factory) {

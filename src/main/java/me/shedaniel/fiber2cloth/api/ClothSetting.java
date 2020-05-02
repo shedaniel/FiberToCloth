@@ -25,8 +25,11 @@ public @interface ClothSetting {
     }
 
     /**
-     * Applies to objects.
+     * Applies to {@linkplain io.github.fablabsmc.fablabs.api.fiber.v1.annotation.Setting.Group setting groups}.
      * Adds GUI entries for the field's inner fields at the same level as this field.
+     *
+     * <p> When this annotation is applied to a direct child of the root (thus normally displayed as its own separate category),
+     * the group's content will appear in the default category.
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.FIELD)
@@ -34,8 +37,12 @@ public @interface ClothSetting {
     }
 
     /**
-     * Applies to objects.
+     * Applies to {@linkplain io.github.fablabsmc.fablabs.api.fiber.v1.annotation.Setting.Group setting groups}.
      * Adds GUI entries for the field's inner fields in a collapsible section.
+     *
+     * <p> When this annotation is applied to a direct child of the root (thus normally displayed as its own separate category),
+     * the collapsible will appear in the default category. Otherwise, this annotation is only useful to specify
+     * the collapsible's parameters.
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.FIELD)

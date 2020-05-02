@@ -14,6 +14,7 @@ import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.derived.ConfigType;
 import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.derived.ConfigTypes;
 import io.github.fablabsmc.fablabs.api.fiber.v1.tree.ConfigBranch;
 import io.github.fablabsmc.fablabs.api.fiber.v1.tree.ConfigTree;
+import me.shedaniel.fiber2cloth.impl.annotation.Fiber2ClothAnnotations;
 import net.minecraft.util.Identifier;
 
 import java.util.Arrays;
@@ -46,7 +47,7 @@ public class ModMenuCompat implements ModMenuApi {
         ConfigBranch cfg;
         cfg = ConfigTree.builder()
                 .withAttribute(ClothAttributes.defaultBackground("minecraft:textures/block/oak_planks.png"))
-                .applyFromPojo(new Pojo(), AnnotatedSettings.create().registerTypeMapping(Pojo.SecondCategory.Choice.class, ConfigTypes.makeEnum(Pojo.SecondCategory.Choice.class)))
+                .applyFromPojo(new Pojo(), Fiber2Cloth.configure(AnnotatedSettings.create().registerTypeMapping(Pojo.SecondCategory.Choice.class, ConfigTypes.makeEnum(Pojo.SecondCategory.Choice.class))))
                 .fork("second.category")
                     .withAttribute(ClothAttributes.categoryBackground("minecraft:textures/block/stone.png"))
                     .withValue("nestedExample", ConfigTypes.STRING, "Hi")
@@ -79,11 +80,19 @@ public class ModMenuCompat implements ModMenuApi {
         public int basicIntField = 100;
 
         @Setting.Group
-        @ClothSetting.CategoryBackground("minecraft:textures/block/bricks.png")
-        public FirstCategory firstCategory = new FirstCategory();
+        @ClothSetting.CollapsibleObject
+        public FirstCategory collapsibleCategory = new FirstCategory();
 
         @Setting.Group
-        public SecondCategory secondCategory = new SecondCategory();
+        @ClothSetting.TransitiveObject
+        public SecondCategory inlineCategory = new SecondCategory();
+
+        @Setting.Group
+        @ClothSetting.CategoryBackground("minecraft:textures/block/bricks.png")
+        public FirstCategory firstPojoCategory = new FirstCategory();
+
+        @Setting.Group
+        public SecondCategory secondPojoCategory = new SecondCategory();
 
         private static class FirstCategory {
             public String[] ids = new String[] {"minecraft:diamond", "fabric:bike_shed"};
