@@ -4,6 +4,7 @@ plugins {
     id 'maven'
     id 'signing'
     id 'com.jfrog.bintray' version '1.8.4'
+    id 'com.matthewprenger.cursegradle' version '1.4.0'
 }
 
 sourceCompatibility = JavaVersion.VERSION_1_8
@@ -61,7 +62,7 @@ bintray {
     user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
     key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_KEY')
     publications = ["MyPublication"]
-    override = true
+    publish = true
     pkg {
         repo = "fiber2cloth"
         name = "fiber2cloth"
@@ -80,6 +81,37 @@ bintray {
                 sign = true
             }
         }
+    }
+}
+
+curseforge {
+    apiKey = project.hasProperty('apiKey') ? project.property('apiKey') : System.getenv('CF_API_KEY')
+    if (apiKey != null)
+        project {
+            id = '340676'
+            releaseType = 'release'
+            addGameVersion '1.15'
+            addGameVersion '1.15.1'
+            addGameVersion '1.15.2'
+            addGameVersion '1.15-Snapshot'
+            addGameVersion 'Fabric'
+            addGameVersion 'Java 8'
+            relations {
+                requiredDependency 'fabric-api'
+                requiredDependency 'cloth-config'
+            }
+            mainArtifact(file("${project.buildDir}/libs/${project.archivesBaseName}-${project.version}.jar")) {
+                displayName = "[Fabric 1.15.x] v$project.version"
+            }
+            addArtifact(file("${project.buildDir}/libs/${project.archivesBaseName}-${project.version}-sources.jar"))
+            afterEvaluate {
+                uploadTask.dependsOn("remapJar")
+                uploadTask.dependsOn("remapSourcesJar")
+            }
+        }
+    options {
+        forgeGradleIntegration = false
+        javaVersionAutoDetect = false
     }
 }
 
