@@ -27,7 +27,7 @@ dependencies {
     modApi ("me.shedaniel.cloth:config-2:1.1.1") {
         exclude group: "net.fabricmc.fabric-api"
     }
-    modApi "me.zeroeightsix:fiber:0.6.0-7"
+    modApi "me.zeroeightsix:fiber:0.12.0-5"
 
     // PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
     // You may need to force-disable transitiveness on them.
