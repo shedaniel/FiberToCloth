@@ -40,6 +40,7 @@ public final class ClothAttributes {
     public static final FiberId EXCLUDED = id("excluded");
     public static final FiberId GROUP_DISPLAY = id("group_display");
     public static final FiberId SUGGESTION_ENUM = id("suggestion");
+    public static final FiberId SLIDER = id("slider");
 
     public static ConfigAttribute<Boolean> excluded() {
         return ConfigAttribute.create(EXCLUDED, ConfigTypes.BOOLEAN, true);
@@ -55,6 +56,10 @@ public final class ClothAttributes {
 
     public static ConfigAttribute<Boolean> suggestionEnum() {
         return ConfigAttribute.create(SUGGESTION_ENUM, ConfigTypes.BOOLEAN, true);
+    }
+
+    public static ConfigAttribute<Boolean> slider() {
+        return ConfigAttribute.create(SLIDER, ConfigTypes.BOOLEAN, true);
     }
 
     /* type properties */

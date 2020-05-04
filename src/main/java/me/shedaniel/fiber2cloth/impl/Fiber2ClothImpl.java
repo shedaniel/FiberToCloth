@@ -23,6 +23,7 @@ import net.minecraft.client.resource.language.I18n;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -133,24 +134,68 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
     }
 
     private void initDefaultFunctionMap() {
-        registerLeafEntryFunction(ConfigTypes.DOUBLE, (type, leaf, mirror, defaultValue, errorSupplier) -> configEntryBuilder
-                .startDoubleField(getFieldNameKey(leaf.getName()), mirror.getValue())
-                .setDefaultValue(defaultValue)
-                .setSaveConsumer(mirror::setValue)
-                .setErrorSupplier(errorSupplier)
-                .build());
-        registerLeafEntryFunction(ConfigTypes.LONG, (type, leaf, mirror, defaultValue, errorSupplier) -> configEntryBuilder
-                .startLongField(getFieldNameKey(leaf.getName()), mirror.getValue())
-                .setDefaultValue(defaultValue)
-                .setSaveConsumer(mirror::setValue)
-                .setErrorSupplier(errorSupplier)
-                .build());
-        registerLeafEntryFunction(ConfigTypes.INTEGER, (type, leaf, mirror, defaultValue, errorSupplier) -> configEntryBuilder
-                .startIntField(getFieldNameKey(leaf.getName()), mirror.getValue())
-                .setDefaultValue(defaultValue)
-                .setSaveConsumer(mirror::setValue)
-                .setErrorSupplier(errorSupplier)
-                .build());
+        registerLeafEntryFunction(ConfigTypes.DOUBLE, (type, leaf, mirror, defaultValue, errorSupplier) -> {
+            if (leaf.getAttributeValue(ClothAttributes.SLIDER, ConfigTypes.BOOLEAN).orElse(false)) {
+                if (type.getMinimum() == null || type.getMaximum() == null || type.getIncrement() == null) {
+                    throw new IllegalStateException("Cannot build a slider without a minimum, a maximum, and a step (" + leaf + ")");
+                }
+                BigDecimal step = type.getIncrement();
+                BigDecimal min = type.getMinimum();
+                BigDecimal max = type.getMaximum();
+                long scaledCurrent = leaf.getValue().subtract(type.getMinimum()).divide(type.getIncrement(), BigDecimal.ROUND_DOWN).longValue();
+                long scaledDefault = leaf.getDefaultValue().subtract(type.getMinimum()).divide(type.getIncrement(), BigDecimal.ROUND_DOWN).longValue();
+                long scaledMax = max.subtract(type.getMinimum()).divide(type.getIncrement(), BigDecimal.ROUND_DOWN).longValue();
+                return configEntryBuilder.startLongSlider(getFieldNameKey(leaf.getName()), scaledCurrent, 0, scaledMax)
+                        .setDefaultValue(scaledDefault)
+                        .setSaveConsumer(v -> leaf.setValue(BigDecimal.valueOf(v).multiply(step).add(min)))
+                        .setErrorSupplier(v -> error(type, BigDecimal.valueOf(v).multiply(step).add(min)))
+                        .setTextGetter(v -> {
+                            BigDecimal val = BigDecimal.valueOf(v);
+                            return I18n.translate("gui.fiber2cloth.slider.value", val.multiply(step).add(min).setScale(step.scale(), BigDecimal.ROUND_DOWN));
+                        })
+                        .build();
+            } else {
+                return configEntryBuilder
+                        .startDoubleField(getFieldNameKey(leaf.getName()), mirror.getValue())
+                        .setDefaultValue(defaultValue)
+                        .setSaveConsumer(mirror::setValue)
+                        .setErrorSupplier(errorSupplier)
+                        .build();
+            }
+        });
+        registerLeafEntryFunction(ConfigTypes.LONG, (type, leaf, mirror, defaultValue, errorSupplier) -> {
+            assert type.getMinimum() != null && type.getMaximum() != null && type.getIncrement() != null;
+            long step;
+            long min;
+            long max;
+            try {
+                step = type.getIncrement().longValueExact();
+                min = type.getMinimum().longValueExact();
+                max = type.getMaximum().longValueExact();
+            } catch (ArithmeticException e) {
+                // FIXME remove this kludge when Fiber has fixed their decimal constraint checker
+                return null;
+            }
+            if (leaf.getAttributeValue(ClothAttributes.SLIDER, ConfigTypes.BOOLEAN).orElse(false)) {
+                long scaledCurrent = leaf.getValue().subtract(type.getMinimum()).divide(type.getIncrement(), BigDecimal.ROUND_DOWN).longValue();
+                long scaledDefault = leaf.getDefaultValue().subtract(type.getMinimum()).divide(type.getIncrement(), BigDecimal.ROUND_DOWN).longValue();
+                long scaledMax = type.getMaximum().subtract(type.getMinimum()).divide(type.getIncrement(), BigDecimal.ROUND_DOWN).longValue();
+                return configEntryBuilder.startLongSlider(getFieldNameKey(leaf.getName()), scaledCurrent, 0, scaledMax)
+                        .setDefaultValue(scaledDefault)
+                        .setSaveConsumer(v -> mirror.setValue(v * step + min))
+                        .setErrorSupplier(v -> error(ConfigTypes.LONG, type, v * step + min))
+                        .setTextGetter(v -> I18n.translate("gui.fiber2cloth.slider.value", v * step + min))
+                        .build();
+            } else {
+                return configEntryBuilder.startLongField(getFieldNameKey(leaf.getName()), mirror.getValue())
+                        .setDefaultValue(defaultValue)
+                        .setSaveConsumer(mirror::setValue)
+                        .setErrorSupplier(errorSupplier)
+                        .setMin(min)
+                        .setMax(max)
+                        .build();
+            }
+        });
         registerLeafEntryFunction(ConfigTypes.BOOLEAN, (type, leaf, mirror, defaultValue, errorSupplier) -> {
             String s = getFieldNameKey(leaf.getName());
             return configEntryBuilder.startBooleanToggle(s, mirror.getValue())

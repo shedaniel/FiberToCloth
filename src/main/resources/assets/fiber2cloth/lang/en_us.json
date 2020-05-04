@@ -1,6 +1,7 @@
 {
   "error.fiber2cloth.when.casting": "Illegal Config Value: %s",
   "error.fiber2cloth.invalid.value": "Invalid Value: %s does not match %s",
+  "gui.fiber2cloth.slider.value": "Value: %s",
   "config.fiber2cloth.default.category": "Default",
   "config.fiber2cloth.second.category": "Second",
   "config.fiber2cloth.second.category.i.am.inside": "I am inside",

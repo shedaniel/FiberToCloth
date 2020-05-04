@@ -21,5 +21,7 @@ public final class Fiber2ClothAnnotations {
                 (annotation, field, pojo, builder) -> builder.withAttribute(ClothAttributes.suggestionEnum()));
         in.registerSettingProcessor(ClothSetting.RegistryInput.class,
                 (annotation, field, pojo, builder) -> builder.withAttribute(ClothAttributes.registryInput(new Identifier(annotation.value()))));
+        in.registerSettingProcessor(ClothSetting.Slider.class,
+                (annotation, field, pojo, builder) -> builder.withAttribute(ClothAttributes.slider()));
     }
 }

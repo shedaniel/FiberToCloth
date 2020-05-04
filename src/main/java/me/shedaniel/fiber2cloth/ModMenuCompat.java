@@ -110,6 +110,10 @@ public class ModMenuCompat implements ModMenuApi {
         }
 
         private static class SecondCategory {
+            @ClothSetting.Slider
+            @Setting.Constrain.Range(min = 0.1, max = 1, step = 0.1)
+            public float percentage = 0.5f;
+
             @ClothSetting.SuggestionEnumInput
             public Choice yes = Choice.NO;
 

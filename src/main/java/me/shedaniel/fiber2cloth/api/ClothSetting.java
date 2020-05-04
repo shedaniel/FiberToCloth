@@ -109,6 +109,15 @@ public @interface ClothSetting {
     @interface SuggestionEnumInput {
     }
 
+    /**
+     * Applies to numerical settings (types converted to a {@link io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.DecimalSerializableType}).
+     * Replaces the default number input with a slider that uses the type's minimum, maximum, and step
+     * @see io.github.fablabsmc.fablabs.api.fiber.v1.annotation.Setting.Constrain.Range
+     */
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    @interface Slider {}
+
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.FIELD)
     @interface RegistryInput {
