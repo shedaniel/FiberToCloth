@@ -13,6 +13,14 @@ public final class Fiber2ClothAnnotations {
                 (annotation, field, pojo, builder) -> builder.withAttribute(ClothAttributes.excluded()));
         in.registerSettingProcessor(ClothSetting.Excluded.class,
                 (annotation, field, pojo, builder) -> builder.withAttribute(ClothAttributes.excluded()));
+        in.registerGroupProcessor(ClothSetting.PrefixText.class,
+                (annotation, field, pojo, builder) -> builder.withAttribute(ClothAttributes.prefixText(annotation.value())));
+        in.registerSettingProcessor(ClothSetting.PrefixText.class,
+                (annotation, field, pojo, builder) -> builder.withAttribute(ClothAttributes.prefixText(annotation.value())));
+        in.registerGroupProcessor(ClothSetting.Tooltip.class,
+                (annotation, field, pojo, builder) -> builder.withAttribute(ClothAttributes.tooltip(annotation.value())));
+        in.registerSettingProcessor(ClothSetting.Tooltip.class,
+                (annotation, field, pojo, builder) -> builder.withAttribute(ClothAttributes.tooltip(annotation.value())));
         in.registerGroupProcessor(ClothSetting.TransitiveObject.class,
                 (annotation, field, pojo, builder) -> builder.withAttribute(ClothAttributes.transitive()));
         in.registerGroupProcessor(ClothSetting.CollapsibleObject.class,
@@ -23,5 +31,7 @@ public final class Fiber2ClothAnnotations {
                 (annotation, field, pojo, builder) -> builder.withAttribute(ClothAttributes.registryInput(new Identifier(annotation.value()))));
         in.registerSettingProcessor(ClothSetting.Slider.class,
                 (annotation, field, pojo, builder) -> builder.withAttribute(ClothAttributes.slider()));
+        in.registerSettingProcessor(ClothSetting.RequiresRestart.class,
+                (annotation, field, pojo, builder) -> builder.withAttribute(ClothAttributes.requiresRestart()));
     }
 }

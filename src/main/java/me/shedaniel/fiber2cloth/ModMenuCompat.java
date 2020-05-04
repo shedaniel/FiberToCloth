@@ -49,8 +49,9 @@ public class ModMenuCompat implements ModMenuApi {
                 .withAttribute(ClothAttributes.defaultBackground("minecraft:textures/block/oak_planks.png"))
                 .applyFromPojo(new Pojo(), Fiber2Cloth.configure(
                         AnnotatedSettings.create()
-                        .registerTypeMapping(Pojo.SecondCategory.Choice.class, ConfigTypes.makeEnum(Pojo.SecondCategory.Choice.class))
-                        .registerTypeMapping(Identifier.class, Fiber2ClothImpl.IDENTIFIER_TYPE)
+                                // TODO remove enum mapping
+                                .registerTypeMapping(Pojo.SecondCategory.Choice.class, ConfigTypes.makeEnum(Pojo.SecondCategory.Choice.class))
+                                .registerTypeMapping(Identifier.class, Fiber2ClothImpl.IDENTIFIER_TYPE)
                 ))
                 .fork("second.category")
                     .withAttribute(ClothAttributes.categoryBackground("minecraft:textures/block/stone.png"))
@@ -58,11 +59,12 @@ public class ModMenuCompat implements ModMenuApi {
                     .fork("i.am.inside")
                         .fork("i.am.inside.but.hidden")
                             .withAttribute(ClothAttributes.transitive())
+                            .withAttribute(ClothAttributes.tooltip())
                             .withValue("transitiveExample", ConfigTypes.makeList(ConfigTypes.DOUBLE), Collections.emptyList())
                         .finishBranch()
                         .beginValue("nestedNestedExample", ConfigTypes.BOOLEAN, false)
                             .withComment("This comment is overridden by the tooltip")
-                            .withAttribute(ClothAttributes.tooltip("config.fiber2cloth.nestedNestedExample.tooltip.", 2))
+                            .withAttribute(ClothAttributes.tooltip("config.fiber2cloth.nestedNestedExample.tooltip"))
                         .finishValue()
                         .beginValue("nestedNestedList", ConfigTypes.makeList(ConfigTypes.STRING), Arrays.asList("hi", "no"))
                             .withAttribute(ClothAttributes.prefixText("config.fiber2cloth.nestedNestedList.description"))
@@ -80,14 +82,16 @@ public class ModMenuCompat implements ModMenuApi {
 
         // adding a field directly to the root will cause it to be added to a "default" category
         @Setting.Constrain.Range(min = 0, max = 100)
-        @Comment("This field will accept 0 - 100.")
+        @Setting(comment = "This field will accept 0 - 100.")
         public int basicIntField = 100;
 
         @Setting.Group
+        @ClothSetting.PrefixText
         @ClothSetting.CollapsibleObject
         public FirstCategory collapsibleCategory = new FirstCategory();
 
         @Setting.Group
+        @ClothSetting.PrefixText
         @ClothSetting.TransitiveObject
         public SecondCategory inlineCategory = new SecondCategory();
 
@@ -114,6 +118,7 @@ public class ModMenuCompat implements ModMenuApi {
             @Setting.Constrain.Range(min = 0.1, max = 1, step = 0.1)
             public float percentage = 0.5f;
 
+            @ClothSetting.RequiresRestart
             @ClothSetting.SuggestionEnumInput
             public Choice yes = Choice.NO;
 

@@ -1,6 +1,5 @@
 package me.shedaniel.fiber2cloth.api;
 
-import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.EnumSerializableType;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 
@@ -27,6 +26,10 @@ public @interface ClothSetting {
     @Target(ElementType.FIELD)
     @interface Excluded {
     }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    @interface RequiresRestart {}
 
     /**
      * Applies to {@linkplain io.github.fablabsmc.fablabs.api.fiber.v1.annotation.Setting.Group setting groups}.
@@ -61,25 +64,21 @@ public @interface ClothSetting {
     @Target(ElementType.FIELD)
     @interface Tooltip {
         /**
-         * Translation keys making up the tooltip, one key per line.
+         * Sets the translation key for the content of the tooltip.
          *
-         * <p> If this value is left empty, the tooltip will be generated with {@link #count()} lines,
-         * where the translation key of a line {@code n} is of the form {@code baseKey + "[" + n + "]"}.
-         */
-        String[] value() default {};
-
-        /**
-         * The base key used to generate translation keys if {@link #value()} is left empty.
+         * <p> If left empty, the translation key will be generated from the concatenation
+         * of this object's translation key and the string "@Tooltip"
          *
-         * <p> If left empty, a base key will be generated from the concatenation of the node's name
-         * and the string {@code "@Tooltip"}
+         * <p> If the localization file contains entries of the form {@code translationKey + "[i]"}, where {@code i}
+         * is a number starting at 1, one tooltip line will be appended for every entry in the sequence.
+         * Example:
+         * <pre>{@code
+         * "mymod.config.entry@Tooltip[1]": "First line",
+         * "mymod.config.entry@Tooltip[2]": "Second line"
+         * }</pre>
+         * @see ClothAttributes#tooltip(String)
          */
-        String baseKey() default "";
-
-        /**
-         * The tooltip's line count, used if {@link #value()} is left empty.
-         */
-        int count() default 1;
+        String value() default "";
     }
 
     /**
@@ -93,8 +92,17 @@ public @interface ClothSetting {
          *
          * <p> If left empty, the translation key will be generated from the concatenation
          * of this object's translation key and the string "@PrefixText"
+         *
+         * <p> If the localization file contains entries of the form {@code translationKey + "[i]"}, where {@code i}
+         * is a number starting at 1, one tooltip line will be appended for every entry in the sequence.
+         * Example:
+         * <pre>{@code
+         * "mymod.config.entry@PrefixText[1]": "First line",
+         * "mymod.config.entry@PrefixText[2]": "Second line"
+         * }</pre>
+         * @see ClothAttributes#prefixText(String)
          */
-        String translationKey() default "";
+        String value() default "";
     }
 
     /**

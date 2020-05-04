@@ -72,6 +72,19 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
         return Optional.empty();
     }
 
+    private static List<String> gatherLocalizedLines(String tt) {
+        List<String> lines = new ArrayList<>();
+        if (I18n.hasTranslation(tt)) {
+            lines.add(I18n.translate(tt));
+        }
+        int i = 1;
+        while (I18n.hasTranslation(tt + "[" + i + "]")) {
+            lines.add(I18n.translate(tt + "[" + i + "]"));
+            i++;
+        }
+        return lines;
+    }
+
     @Override
     public Fiber2Cloth setDefaultCategoryNode(ConfigBranch defaultCategoryNode) {
         if (!node.getItems().contains(defaultCategoryNode))
@@ -122,7 +135,7 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
                 mirror.mirror(leaf);
                 T actualType = cls.cast(leaf.getConfigType());
                 @SuppressWarnings("unchecked") ConfigLeaf<S> l = (ConfigLeaf<S>) leaf;
-                return function.apply(actualType, l, mirror, type.toRuntimeType(l.getDefaultValue()), v -> error(type, actualType, v));
+                return function.apply(l, actualType, mirror, type.toRuntimeType(l.getDefaultValue()), v -> error(type, actualType, v));
             }
             return null;
         };
@@ -134,7 +147,7 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
     }
 
     private void initDefaultFunctionMap() {
-        registerLeafEntryFunction(ConfigTypes.DOUBLE, (type, leaf, mirror, defaultValue, errorSupplier) -> {
+        registerLeafEntryFunction(ConfigTypes.DOUBLE, (leaf, type, mirror, defaultValue, errorSupplier) -> {
             if (leaf.getAttributeValue(ClothAttributes.SLIDER, ConfigTypes.BOOLEAN).orElse(false)) {
                 if (type.getMinimum() == null || type.getMaximum() == null || type.getIncrement() == null) {
                     throw new IllegalStateException("Cannot build a slider without a minimum, a maximum, and a step (" + leaf + ")");
@@ -163,7 +176,7 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
                         .build();
             }
         });
-        registerLeafEntryFunction(ConfigTypes.LONG, (type, leaf, mirror, defaultValue, errorSupplier) -> {
+        registerLeafEntryFunction(ConfigTypes.LONG, (leaf, type, mirror, defaultValue, errorSupplier) -> {
             assert type.getMinimum() != null && type.getMaximum() != null && type.getIncrement() != null;
             long step;
             long min;
@@ -196,7 +209,7 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
                         .build();
             }
         });
-        registerLeafEntryFunction(ConfigTypes.BOOLEAN, (type, leaf, mirror, defaultValue, errorSupplier) -> {
+        registerLeafEntryFunction(ConfigTypes.BOOLEAN, (leaf, type, mirror, defaultValue, errorSupplier) -> {
             String s = getFieldNameKey(leaf.getName());
             return configEntryBuilder.startBooleanToggle(s, mirror.getValue())
                     .setDefaultValue(defaultValue)
@@ -226,12 +239,12 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
                         .build();
             }
         });
-        registerLeafEntryFunction(ConfigTypes.STRING, (type, leaf, mirror, defaultValue, errorSupplier) -> configEntryBuilder
+        registerLeafEntryFunction(ConfigTypes.STRING, (leaf, type, mirror, defaultValue, errorSupplier) -> configEntryBuilder
                 .startStrField(getFieldNameKey(leaf.getName()), mirror.getValue())
                 .setDefaultValue(defaultValue)
                 .setSaveConsumer(mirror::setValue)
                 .setErrorSupplier(errorSupplier).build());
-        registerLeafEntryFunction(IDENTIFIER_TYPE, (type, leaf, mirror, defaultValue, suggestedErrorSupplier) ->
+        registerLeafEntryFunction(IDENTIFIER_TYPE, (leaf, type, mirror, defaultValue, suggestedErrorSupplier) ->
                 leaf.getAttributeValue(ClothAttributes.REGISTRY_INPUT, IDENTIFIER_TYPE).map(Registry.REGISTRIES::get).map(registry -> {
                     DropdownBoxEntry.SelectionTopCellElement<Identifier> topCellElement;
                     if (registry == Registry.BLOCK) {
@@ -247,28 +260,28 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
                             .setSaveConsumer(mirror::setValue)
                             .build();
                 }).orElse(null));
-        registerLeafEntryFunction(ConfigTypes.makeList(ConfigTypes.DOUBLE), (type, leaf, mirror, defaultValue, errorSupplier) -> configEntryBuilder
+        registerLeafEntryFunction(ConfigTypes.makeList(ConfigTypes.DOUBLE), (leaf, type, mirror, defaultValue, errorSupplier) -> configEntryBuilder
                 .startDoubleList(getFieldNameKey(leaf.getName()), mirror.getValue())
                 .setDefaultValue(defaultValue)
                 .setExpanded(true)
                 .setSaveConsumer(mirror::setValue)
                 .setErrorSupplier(errorSupplier)
                 .build());
-        registerLeafEntryFunction(ConfigTypes.makeList(ConfigTypes.LONG), (type, leaf, mirror, defaultValue, errorSupplier) -> configEntryBuilder
+        registerLeafEntryFunction(ConfigTypes.makeList(ConfigTypes.LONG), (leaf, type, mirror, defaultValue, errorSupplier) -> configEntryBuilder
                 .startLongList(getFieldNameKey(leaf.getName()), mirror.getValue())
                 .setDefaultValue(defaultValue)
                 .setExpanded(true)
                 .setSaveConsumer(mirror::setValue)
                 .setErrorSupplier(errorSupplier)
                 .build());
-        registerLeafEntryFunction(ConfigTypes.makeList(ConfigTypes.INTEGER), (type, leaf, mirror, defaultValue, errorSupplier) -> configEntryBuilder
+        registerLeafEntryFunction(ConfigTypes.makeList(ConfigTypes.INTEGER), (leaf, type, mirror, defaultValue, errorSupplier) -> configEntryBuilder
                 .startIntList(getFieldNameKey(leaf.getName()), mirror.getValue())
                 .setDefaultValue(defaultValue)
                 .setExpanded(true)
                 .setSaveConsumer(mirror::setValue)
                 .setErrorSupplier(errorSupplier)
                 .build());
-        registerLeafEntryFunction(ConfigTypes.makeList(ConfigTypes.STRING), (type, leaf, mirror, defaultValue, errorSupplier) -> configEntryBuilder
+        registerLeafEntryFunction(ConfigTypes.makeList(ConfigTypes.STRING), (leaf, type, mirror, defaultValue, errorSupplier) -> configEntryBuilder
                 .startStrList(getFieldNameKey(leaf.getName()), mirror.getValue())
                 .setDefaultValue(defaultValue)
                 .setExpanded(true)
@@ -390,7 +403,7 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
                     entries = transformNodeFirstLayer(branch.getName(), branch);
                 } else {
                     category = getOrCreateCategory(builder, getDefaultCategoryKey(), this.node);
-                    entries = appendSubCategory("", new ArrayList<>(), branch);
+                    entries = appendSubCategory(null, new ArrayList<>(), branch);
                 }
             } else {
                 continue;
@@ -440,9 +453,10 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
     }
 
     private List<AbstractConfigListEntry<?>> appendSubCategory(String categoryName, List<AbstractConfigListEntry<?>> entries, ConfigBranch nestedNode) {
-        String subCategoryName = categoryName + "." + nestedNode.getName();
+        String subCategoryName = (categoryName == null ? "" : (categoryName + ".")) + nestedNode.getName();
         GroupDisplay groupDisplay = nestedNode.getAttributeValue(ClothAttributes.GROUP_DISPLAY, GroupDisplay.TYPE).orElse(GroupDisplay.DEFAULT);
         if (groupDisplay.isTransitive()) {
+            this.addPrefixText(entries, nestedNode, getFieldNameKey(subCategoryName));
             // no addAll because raw types
             transformNodeSecondLayer(subCategoryName, nestedNode).forEach(entries::add);
         } else {
@@ -458,20 +472,33 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
         if (factory != null && !value.getAttributeValue(ClothAttributes.EXCLUDED, ConfigTypes.BOOLEAN).orElse(false)) {
             AbstractConfigListEntry<?> entry = factory.apply(value);
             if (entry instanceof TooltipListEntry<?>) {
-                Optional<List<String>> rawTooltip = value.getAttributeValue(ClothAttributes.TOOLTIP, ConfigTypes.makeList(ConfigTypes.STRING));
+                Optional<String> rawTooltip = value.getAttributeValue(ClothAttributes.TOOLTIP, ConfigTypes.STRING);
                 Optional<String[]> tooltip;
                 if (rawTooltip.isPresent()) {
-                    tooltip = rawTooltip.map(tt -> tt.stream().map(s -> I18n.translate(s)).toArray(String[]::new));
+                    tooltip = rawTooltip
+                            .map(key -> key.isEmpty() ? entry.getFieldName() + "@Tooltip" : key)
+                            .map(Fiber2ClothImpl::gatherLocalizedLines)
+                            .map(l -> l.toArray(new String[0]));
                 } else {
                     String comment = value instanceof Commentable ? ((Commentable) value).getComment() : null;
                     tooltip = Optional.ofNullable(comment).map(s -> s.split("\n"));
                 }
                 ((TooltipListEntry<?>) entry).setTooltipSupplier(() -> tooltip);
             }
-            value.getAttributeValue(ClothAttributes.PREFIX_TEXT, ConfigTypes.STRING)
-                    .ifPresent(txt -> category.add(configEntryBuilder.startTextDescription(I18n.translate(txt)).build()));
+            this.addPrefixText(category, value, entry.getFieldName());
+            value.getAttributeValue(ClothAttributes.REQUIRES_RESTART, ConfigTypes.BOOLEAN)
+                    .ifPresent(entry::setRequiresRestart);
             category.add(entry);
         }
         return category;
+    }
+
+    private void addPrefixText(List<AbstractConfigListEntry<?>> entries, ConfigNode value, String baseTranslationKey) {
+        value.getAttributeValue(ClothAttributes.PREFIX_TEXT, ConfigTypes.STRING)
+                .map(key -> key.isEmpty() ? baseTranslationKey + "@PrefixText" : key)
+                .map(Fiber2ClothImpl::gatherLocalizedLines)
+                .map(l -> String.join("\n", l))
+                .map(txt -> configEntryBuilder.startTextDescription(txt).build())
+                .ifPresent(entries::add);
     }
 }

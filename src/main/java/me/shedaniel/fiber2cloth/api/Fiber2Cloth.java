@@ -59,7 +59,7 @@ public interface Fiber2Cloth {
     
     Fiber2Cloth registerTreeEntryFunction(ConfigNode item, Function<ConfigNode, AbstractConfigListEntry<?>> function);
 
-    <R, S, T extends SerializableType<S>> Fiber2Cloth registerLeafEntryFunction(ConfigType<R, S, T> type, GuiEntryProvider<R, S, T> function);
+    <R, S, T extends SerializableType<S>> Fiber2Cloth registerLeafEntryFunction(ConfigType<R, S, T> superType, GuiEntryProvider<R, S, T> function);
 
     Map<Class<? extends SerializableType<?>>, Function<ConfigLeaf<?>, AbstractConfigListEntry<?>>> getFunctionMap();
 

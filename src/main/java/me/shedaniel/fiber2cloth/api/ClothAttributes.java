@@ -9,9 +9,6 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.MutableRegistry;
 import net.minecraft.util.registry.Registry;
 
-import java.util.List;
-import java.util.stream.IntStream;
-
 public final class ClothAttributes {
 
     /* aesthetics */
@@ -65,6 +62,7 @@ public final class ClothAttributes {
     /* type properties */
 
     public static final FiberId REGISTRY_INPUT = id("registry_object");
+    public static final FiberId REQUIRES_RESTART = id("requires_restart");
 
     public static ConfigAttribute<String> registryInput(MutableRegistry<?> registry) {
         Identifier registryId = Registry.REGISTRIES.getId(registry);
@@ -76,6 +74,10 @@ public final class ClothAttributes {
         return ConfigAttribute.create(REGISTRY_INPUT, Fiber2ClothImpl.IDENTIFIER_TYPE, registryId);
     }
 
+    public static ConfigAttribute<Boolean> requiresRestart() {
+        return ConfigAttribute.create(REQUIRES_RESTART, ConfigTypes.BOOLEAN, true);
+    }
+
     /* descriptions */
 
     public static final FiberId PREFIX_TEXT = id("prefix_text");
@@ -85,12 +87,42 @@ public final class ClothAttributes {
         return ConfigAttribute.create(PREFIX_TEXT, ConfigTypes.STRING, prefixKey);
     }
 
-    public static ConfigAttribute<List<String>> tooltip(String baseKey, int numberOfLines) {
-        return tooltip(IntStream.range(1, numberOfLines + 1).mapToObj(i -> baseKey + i).toArray(String[]::new));
+    /**
+     * Creates a localizable tooltip attribute for a node.
+     *
+     * <p> The tooltip's translation key will be generated from the concatenation
+     * of the node's own translation key and the string "@Tooltip"
+     *
+     * <p> If the localization file contains entries of the form {@code translationKey + "[i]"}, where {@code i}
+     * is a number starting at 1, one tooltip line will be appended for every entry in the sequence.
+     * Example:
+     * <pre>{@code
+     * "mymod.config.entry@Tooltip[1]": "First line",
+     * "mymod.config.entry@Tooltip[2]": "Second line"
+     * }</pre>
+     * @see ClothSetting.Tooltip
+     */
+    public static ConfigAttribute<String> tooltip() {
+        return tooltip(null);
     }
 
-    public static ConfigAttribute<List<String>> tooltip(String... tooltipKeys) {
-        return ConfigAttribute.create(TOOLTIP, ConfigTypes.makeArray(ConfigTypes.STRING), tooltipKeys);
+    /**
+     * Creates a localizable tooltip attribute for a node.
+     *
+     * <p> If {@code tooltipKey} is empty or null, the translation key will be generated from the concatenation
+     * of the node's own translation key and the string "@Tooltip"
+     *
+     * <p> If the localization file contains entries of the form {@code translationKey + "[i]"}, where {@code i}
+     * is a number starting at 1, one tooltip line will be appended for every entry in the sequence.
+     * Example:
+     * <pre>{@code
+     * "mymod.config.entry@Tooltip[1]": "First line",
+     * "mymod.config.entry@Tooltip[2]": "Second line"
+     * }</pre>
+     * @see ClothSetting.Tooltip
+     */
+    public static ConfigAttribute<String> tooltip(String tooltipKey) {
+        return ConfigAttribute.create(TOOLTIP, ConfigTypes.STRING, tooltipKey == null ? "" : tooltipKey);
     }
 
 
