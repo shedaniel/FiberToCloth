@@ -1,25 +1,25 @@
 package me.shedaniel.fiber2cloth;
 
 import blue.endless.jankson.Comment;
+import io.github.fablabsmc.fablabs.api.fiber.v1.annotation.AnnotatedSettings;
+import io.github.fablabsmc.fablabs.api.fiber.v1.annotation.Setting;
+import io.github.fablabsmc.fablabs.api.fiber.v1.exception.FiberException;
+import io.github.fablabsmc.fablabs.api.fiber.v1.exception.RuntimeFiberException;
+import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.derived.ConfigTypes;
+import io.github.fablabsmc.fablabs.api.fiber.v1.tree.ConfigBranch;
+import io.github.fablabsmc.fablabs.api.fiber.v1.tree.ConfigTree;
 import io.github.prospector.modmenu.api.ConfigScreenFactory;
 import io.github.prospector.modmenu.api.ModMenuApi;
 import me.shedaniel.fiber2cloth.api.ClothAttributes;
 import me.shedaniel.fiber2cloth.api.ClothSetting;
 import me.shedaniel.fiber2cloth.api.Fiber2Cloth;
-import io.github.fablabsmc.fablabs.api.fiber.v1.annotation.AnnotatedSettings;
-import io.github.fablabsmc.fablabs.api.fiber.v1.annotation.Setting;
-import io.github.fablabsmc.fablabs.api.fiber.v1.exception.FiberException;
-import io.github.fablabsmc.fablabs.api.fiber.v1.exception.RuntimeFiberException;
-import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.derived.ConfigType;
-import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.derived.ConfigTypes;
-import io.github.fablabsmc.fablabs.api.fiber.v1.tree.ConfigBranch;
-import io.github.fablabsmc.fablabs.api.fiber.v1.tree.ConfigTree;
-import me.shedaniel.fiber2cloth.impl.annotation.Fiber2ClothAnnotations;
+import me.shedaniel.fiber2cloth.impl.Fiber2ClothImpl;
+import net.minecraft.block.Blocks;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.registry.Registry;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 
 public class ModMenuCompat implements ModMenuApi {
     @Override
@@ -47,7 +47,11 @@ public class ModMenuCompat implements ModMenuApi {
         ConfigBranch cfg;
         cfg = ConfigTree.builder()
                 .withAttribute(ClothAttributes.defaultBackground("minecraft:textures/block/oak_planks.png"))
-                .applyFromPojo(new Pojo(), Fiber2Cloth.configure(AnnotatedSettings.create().registerTypeMapping(Pojo.SecondCategory.Choice.class, ConfigTypes.makeEnum(Pojo.SecondCategory.Choice.class))))
+                .applyFromPojo(new Pojo(), Fiber2Cloth.configure(
+                        AnnotatedSettings.create()
+                        .registerTypeMapping(Pojo.SecondCategory.Choice.class, ConfigTypes.makeEnum(Pojo.SecondCategory.Choice.class))
+                        .registerTypeMapping(Identifier.class, Fiber2ClothImpl.IDENTIFIER_TYPE)
+                ))
                 .fork("second.category")
                     .withAttribute(ClothAttributes.categoryBackground("minecraft:textures/block/stone.png"))
                     .withValue("nestedExample", ConfigTypes.STRING, "Hi")
@@ -95,11 +99,18 @@ public class ModMenuCompat implements ModMenuApi {
         public SecondCategory secondPojoCategory = new SecondCategory();
 
         private static class FirstCategory {
-            public String[] ids = new String[] {"minecraft:diamond", "fabric:bike_shed"};
+            public Identifier[] ids = new Identifier[] {
+                    new Identifier("minecraft:diamond"),
+                    new Identifier("fabric:bike_shed")
+            };
+
+            @Comment("Your favourite block in the game")
+            @ClothSetting.RegistryInput("block")
+            public Identifier favouriteBlock = Registry.BLOCK.getId(Blocks.COARSE_DIRT);
         }
 
         private static class SecondCategory {
-            @ClothSetting.EnumHandler(display = ClothSetting.EnumHandler.EnumDisplayOption.BUTTON)
+            @ClothSetting.SuggestionEnumInput
             public Choice yes = Choice.NO;
 
             enum Choice {

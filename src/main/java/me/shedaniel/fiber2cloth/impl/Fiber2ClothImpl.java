@@ -1,23 +1,27 @@
 package me.shedaniel.fiber2cloth.impl;
 
 import com.google.common.collect.Maps;
+import io.github.fablabsmc.fablabs.api.fiber.v1.exception.FiberConversionException;
+import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.EnumSerializableType;
+import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.SerializableType;
+import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.derived.ConfigType;
+import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.derived.ConfigTypes;
 import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.derived.StringConfigType;
+import io.github.fablabsmc.fablabs.api.fiber.v1.tree.*;
 import me.shedaniel.clothconfig2.api.AbstractConfigListEntry;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
+import me.shedaniel.clothconfig2.gui.entries.DropdownBoxEntry;
 import me.shedaniel.clothconfig2.gui.entries.TooltipListEntry;
+import me.shedaniel.clothconfig2.impl.builders.DropdownMenuBuilder;
 import me.shedaniel.fiber2cloth.api.ClothAttributes;
 import me.shedaniel.fiber2cloth.api.Fiber2Cloth;
 import me.shedaniel.fiber2cloth.api.GuiEntryProvider;
-import io.github.fablabsmc.fablabs.api.fiber.v1.exception.FiberConversionException;
-import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.SerializableType;
-import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.derived.ConfigType;
-import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.derived.ConfigTypes;
-import io.github.fablabsmc.fablabs.api.fiber.v1.tree.*;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.registry.Registry;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -54,11 +58,15 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
     private static <S, T> Optional<String> error(ConfigType<T, S, ?> type, SerializableType<S> constraints, T value) {
         try {
             S v = type.toSerializedType(value);
-            if (!constraints.accepts(v)) {
-                return Optional.of(I18n.translate("error.fiber2cloth.invalid.value", v, constraints));
-            }
+            return error(constraints, v);
         } catch (FiberConversionException e) {
             return Optional.of(I18n.translate("error.fiber2cloth.when.casting", e.getMessage()));
+        }
+    }
+
+    private static <S> Optional<String> error(SerializableType<S> constraints, S v) {
+        if (!constraints.accepts(v)) {
+            return Optional.of(I18n.translate("error.fiber2cloth.invalid.value", v, constraints));
         }
         return Optional.empty();
     }
@@ -155,11 +163,45 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
                         return bool ? "§aYes" : "§cNo";
                     }).build();
         });
+        this.functionMap.put(EnumSerializableType.class, node -> {
+            assert node.getConfigType().getPlatformType() == String.class;
+            @SuppressWarnings("unchecked") ConfigLeaf<String> leaf = ((ConfigLeaf<String>) node);
+            EnumSerializableType type = (EnumSerializableType) leaf.getConfigType();
+            if (leaf.getAttributeValue(ClothAttributes.SUGGESTION_ENUM, ConfigTypes.BOOLEAN).orElse(false)) {
+                return configEntryBuilder.startDropdownMenu(getFieldNameKey(leaf.getName()), leaf.getValue(), s -> type.accepts(s) ? s : null)
+                        .setDefaultValue(leaf.getDefaultValue())
+                        .setSaveConsumer(leaf::setValue)
+                        .setSelections(type.getValidValues())
+                        .build();
+            } else {
+                return configEntryBuilder.startSelector(getFieldNameKey(leaf.getName()), type.getValidValues().toArray(new String[0]), leaf.getValue())
+                        .setDefaultValue(leaf.getDefaultValue())
+                        .setSaveConsumer(leaf::setValue)
+                        .setErrorSupplier(v -> error(type, v))
+                        .build();
+            }
+        });
         registerLeafEntryFunction(ConfigTypes.STRING, (type, leaf, mirror, defaultValue, errorSupplier) -> configEntryBuilder
                 .startStrField(getFieldNameKey(leaf.getName()), mirror.getValue())
                 .setDefaultValue(defaultValue)
                 .setSaveConsumer(mirror::setValue)
                 .setErrorSupplier(errorSupplier).build());
+        registerLeafEntryFunction(IDENTIFIER_TYPE, (type, leaf, mirror, defaultValue, suggestedErrorSupplier) ->
+                leaf.getAttributeValue(ClothAttributes.REGISTRY_INPUT, IDENTIFIER_TYPE).map(Registry.REGISTRIES::get).map(registry -> {
+                    DropdownBoxEntry.SelectionTopCellElement<Identifier> topCellElement;
+                    if (registry == Registry.BLOCK) {
+                        topCellElement = DropdownMenuBuilder.TopCellElementBuilder.ofBlockIdentifier(Registry.BLOCK.get(mirror.getValue()));
+                    } else if (registry == Registry.ITEM) {
+                        topCellElement = DropdownMenuBuilder.TopCellElementBuilder.ofItemIdentifier(Registry.ITEM.get(mirror.getValue()));
+                    } else {
+                        topCellElement = DropdownMenuBuilder.TopCellElementBuilder.of(mirror.getValue(), s -> Optional.ofNullable(Identifier.tryParse(s)).filter(registry::containsId).orElse(null));
+                    }
+                    return configEntryBuilder.startDropdownMenu(getFieldNameKey(leaf.getName()), topCellElement)
+                            .setSelections(registry.getIds())
+                            .setDefaultValue(defaultValue)
+                            .setSaveConsumer(mirror::setValue)
+                            .build();
+                }).orElse(null));
         registerLeafEntryFunction(ConfigTypes.makeList(ConfigTypes.DOUBLE), (type, leaf, mirror, defaultValue, errorSupplier) -> configEntryBuilder
                 .startDoubleList(getFieldNameKey(leaf.getName()), mirror.getValue())
                 .setDefaultValue(defaultValue)

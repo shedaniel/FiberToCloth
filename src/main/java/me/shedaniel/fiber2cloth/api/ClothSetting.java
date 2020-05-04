@@ -1,5 +1,9 @@
 package me.shedaniel.fiber2cloth.api;
 
+import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.EnumSerializableType;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.registry.Registry;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -94,16 +98,29 @@ public @interface ClothSetting {
     }
 
     /**
-     * Defines how an enum is handled
+     * If applied to an enum field (or any field that is converted to an
+     * {@link io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.EnumSerializableType}, the setting will be displayed as
+     * a text field with suggestions instead of a cycling button.
+     *
+     * <p>This can be useful for settings with a large amount of possible values.
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.FIELD)
-    @interface EnumHandler {
-        EnumDisplayOption display();
+    @interface SuggestionEnumInput {
+    }
 
-        enum EnumDisplayOption {
-            DROPDOWN,
-            BUTTON
-        }
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    @interface RegistryInput {
+        /**
+         * If set to a valid {@link Registry} identifier, the generated text input will use the values
+         * in that registry for suggestions.
+         *
+         * <p>The returned string should represent a valid {@link Identifier} that exists as
+         * a key in {@link Registry#REGISTRIES}.
+         *
+         * @return a string denoting a valid {@link Identifier} for a {@link Registry}
+         */
+        String value();
     }
 }
