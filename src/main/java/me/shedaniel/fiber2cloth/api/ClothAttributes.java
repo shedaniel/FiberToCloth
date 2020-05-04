@@ -13,15 +13,34 @@ public final class ClothAttributes {
 
     /* aesthetics */
 
-    public static final FiberId DEFAULT_BACKGROUND = id("background");
+    public static final FiberId DEFAULT_BACKGROUND = id("default_background");
+    public static final FiberId TRANSPARENT_BACKGROUND = id("transparent_background");
     public static final FiberId CATEGORY_BACKGROUND = id("category_background");
 
+    /**
+     * Creates an attribute describing the default background used by every category that
+     * does not have a specific background set.
+     *
+     * <p>The returned attribute can only be applied to the root of a config tree
+     *
+     * @param backgroundLocation the location of the texture to use for the background
+     * @see #TRANSPARENT_BACKGROUND
+     */
     public static ConfigAttribute<String> defaultBackground(String backgroundLocation) {
         return ConfigAttribute.create(DEFAULT_BACKGROUND, Fiber2ClothImpl.IDENTIFIER_TYPE.getSerializedType(), backgroundLocation);
     }
 
     public static ConfigAttribute<String> defaultBackground(Identifier backgroundLocation) {
         return ConfigAttribute.create(DEFAULT_BACKGROUND, Fiber2ClothImpl.IDENTIFIER_TYPE, backgroundLocation);
+    }
+
+    /**
+     * Creates an attribute indicating that in-game config screens should use transparent backgrounds.
+     *
+     * <p>The returned attribute can only be applied to the root of a config tree
+     */
+    public static ConfigAttribute<Boolean> transparentBackground() {
+        return ConfigAttribute.create(TRANSPARENT_BACKGROUND, ConfigTypes.BOOLEAN, true);
     }
 
     public static ConfigAttribute<String> categoryBackground(String backgroundLocation) {

@@ -46,6 +46,7 @@ public class ModMenuCompat implements ModMenuApi {
     private ConfigBranch buildConfigTree() throws FiberException {
         ConfigBranch cfg;
         cfg = ConfigTree.builder()
+                .withAttribute(ClothAttributes.transparentBackground())
                 .withAttribute(ClothAttributes.defaultBackground("minecraft:textures/block/oak_planks.png"))
                 .applyFromPojo(new Pojo(), Fiber2Cloth.configure(
                         AnnotatedSettings.create()

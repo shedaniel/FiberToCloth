@@ -332,6 +332,7 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
             ConfigBuilder builder = ConfigBuilder.create().setTitle(getTitle()).setParentScreen(getParentScreen());
             transformNode(builder, getNode());
             getNode().getAttributeValue(ClothAttributes.DEFAULT_BACKGROUND, IDENTIFIER_TYPE).ifPresent(builder::setDefaultBackgroundTexture);
+            getNode().getAttributeValue(ClothAttributes.TRANSPARENT_BACKGROUND, ConfigTypes.BOOLEAN).ifPresent(builder::setTransparentBackground);
             String defaultS = defaultCategoryNode == node ? getDefaultCategoryKey() : getFieldNameKey(defaultCategoryNode.getName());
             if (builder.hasCategory(defaultS)) {
                 builder.setFallbackCategory(builder.getOrCreateCategory(defaultS));
