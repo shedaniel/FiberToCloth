@@ -112,6 +112,9 @@ public class ModMenuCompat implements ModMenuApi {
             @Comment("Your favourite block in the game")
             @ClothSetting.RegistryInput("block")
             public Identifier favouriteBlock = Registry.BLOCK.getId(Blocks.COARSE_DIRT);
+
+            @ClothSetting.ColorPicker(alpha = false)
+            public int favouriteColor = 0xFF0000;
         }
 
         private static class SecondCategory {

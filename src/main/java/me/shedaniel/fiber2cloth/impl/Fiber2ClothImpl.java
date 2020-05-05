@@ -209,6 +209,15 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
                         .build();
             }
         });
+        registerLeafEntryFunction(ConfigTypes.INTEGER, (leaf, type, mirror, defaultValue, errorSupplier) ->
+                leaf.getAttributeValue(ClothAttributes.COLOR_PICKER, ColorPickerFormat.TYPE).map(t -> configEntryBuilder
+                        .startColorField(getFieldNameKey(leaf.getName()), mirror.getValue())
+                        .setDefaultValue(defaultValue)
+                        .setSaveConsumer(mirror::setValue)
+                        .setErrorSupplier(errorSupplier)
+                        .setAlphaMode(t == ColorPickerFormat.ARGB)
+                        .build()
+                ).orElse(null));
         registerLeafEntryFunction(ConfigTypes.BOOLEAN, (leaf, type, mirror, defaultValue, errorSupplier) -> {
             String s = getFieldNameKey(leaf.getName());
             return configEntryBuilder.startBooleanToggle(s, mirror.getValue())

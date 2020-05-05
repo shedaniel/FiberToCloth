@@ -140,4 +140,14 @@ public @interface ClothSetting {
          */
         String value();
     }
+
+    /**
+     * Applies to a setting of type {@link io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.derived.ConfigTypes#INTEGER}.
+     * Replaces the default number input with a color picker.
+     */
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    @interface ColorPicker {
+        boolean alpha();
+    }
 }

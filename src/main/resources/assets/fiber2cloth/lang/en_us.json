@@ -25,5 +25,6 @@
   "config.fiber2cloth.transitiveExample@Comment": "Technically Nested Nested Nested List",
   "config.fiber2cloth.percentage": "Slider for a decimal value",
   "config.fiber2cloth.yes": "Useful Input for a Simple Choice",
-  "config.fiber2cloth.favouriteBlock": "My favourite block"
+  "config.fiber2cloth.favouriteBlock": "My favorite block",
+  "config.fiber2cloth.favouriteColor": "Your favorite color"
 }

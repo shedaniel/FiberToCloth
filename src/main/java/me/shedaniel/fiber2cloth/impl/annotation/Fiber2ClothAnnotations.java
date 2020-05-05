@@ -33,5 +33,7 @@ public final class Fiber2ClothAnnotations {
                 (annotation, field, pojo, builder) -> builder.withAttribute(ClothAttributes.slider()));
         in.registerSettingProcessor(ClothSetting.RequiresRestart.class,
                 (annotation, field, pojo, builder) -> builder.withAttribute(ClothAttributes.requiresRestart()));
+        in.registerSettingProcessor(ClothSetting.ColorPicker.class,
+                (annotation, field, pojo, builder) -> builder.withAttribute(ClothAttributes.colorPicker(annotation.alpha())));
     }
 }

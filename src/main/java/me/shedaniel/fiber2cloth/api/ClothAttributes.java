@@ -3,6 +3,7 @@ package me.shedaniel.fiber2cloth.api;
 import io.github.fablabsmc.fablabs.api.fiber.v1.FiberId;
 import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.derived.ConfigTypes;
 import io.github.fablabsmc.fablabs.api.fiber.v1.tree.ConfigAttribute;
+import me.shedaniel.fiber2cloth.impl.ColorPickerFormat;
 import me.shedaniel.fiber2cloth.impl.Fiber2ClothImpl;
 import me.shedaniel.fiber2cloth.impl.GroupDisplay;
 import net.minecraft.util.Identifier;
@@ -57,6 +58,7 @@ public final class ClothAttributes {
     public static final FiberId GROUP_DISPLAY = id("group_display");
     public static final FiberId SUGGESTION_ENUM = id("suggestion");
     public static final FiberId SLIDER = id("slider");
+    public static final FiberId COLOR_PICKER = id("color_picker");
 
     public static ConfigAttribute<Boolean> excluded() {
         return ConfigAttribute.create(EXCLUDED, ConfigTypes.BOOLEAN, true);
@@ -76,6 +78,10 @@ public final class ClothAttributes {
 
     public static ConfigAttribute<Boolean> slider() {
         return ConfigAttribute.create(SLIDER, ConfigTypes.BOOLEAN, true);
+    }
+
+    public static ConfigAttribute<String> colorPicker(boolean alpha) {
+        return ConfigAttribute.create(COLOR_PICKER, ColorPickerFormat.TYPE, alpha ? ColorPickerFormat.ARGB : ColorPickerFormat.RGB);
     }
 
     /* type properties */
