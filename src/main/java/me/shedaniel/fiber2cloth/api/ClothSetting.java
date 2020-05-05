@@ -1,5 +1,6 @@
 package me.shedaniel.fiber2cloth.api;
 
+import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.EnumSerializableType;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 
@@ -107,14 +108,29 @@ public @interface ClothSetting {
 
     /**
      * If applied to an enum field (or any field that is converted to an
-     * {@link io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.EnumSerializableType}, the setting will be displayed as
-     * a text field with suggestions instead of a cycling button.
-     *
-     * <p>This can be useful for settings with a large amount of possible values.
+     * {@link EnumSerializableType}, defines how the enum is displayed.
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.FIELD)
-    @interface SuggestionEnumInput {
+    @interface EnumHandler {
+        EnumDisplayOption value();
+
+        enum EnumDisplayOption {
+            /**
+             * Displays the setting as a cycling button. This is the default option.
+             */
+            BUTTON,
+            /**
+             * Displays the setting as a dropdown menu, showing every possibility on click.
+             */
+            DROPDOWN,
+            /**
+             * Displays the setting as a text field with suggestions.
+             *
+             * <p>This option can be useful for settings with a large amount of possible values.
+             */
+            SUGGESTION_INPUT
+        }
     }
 
     /**

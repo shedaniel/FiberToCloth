@@ -6,6 +6,7 @@ import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.EnumSerializableType
 import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.SerializableType;
 import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.derived.ConfigType;
 import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.derived.ConfigTypes;
+import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.derived.EnumConfigType;
 import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.derived.StringConfigType;
 import io.github.fablabsmc.fablabs.api.fiber.v1.tree.*;
 import me.shedaniel.clothconfig2.api.AbstractConfigListEntry;
@@ -16,6 +17,7 @@ import me.shedaniel.clothconfig2.gui.entries.DropdownBoxEntry;
 import me.shedaniel.clothconfig2.gui.entries.TooltipListEntry;
 import me.shedaniel.clothconfig2.impl.builders.DropdownMenuBuilder;
 import me.shedaniel.fiber2cloth.api.ClothAttributes;
+import me.shedaniel.fiber2cloth.api.ClothSetting;
 import me.shedaniel.fiber2cloth.api.Fiber2Cloth;
 import me.shedaniel.fiber2cloth.api.GuiEntryProvider;
 import net.minecraft.client.gui.screen.Screen;
@@ -30,6 +32,7 @@ import java.util.function.Function;
 
 public class Fiber2ClothImpl implements Fiber2Cloth {
 
+    public static final EnumConfigType<ClothSetting.EnumHandler.EnumDisplayOption> ENUM_DISPLAY_TYPE = ConfigTypes.makeEnum(ClothSetting.EnumHandler.EnumDisplayOption.class);
     public static final StringConfigType<Identifier> IDENTIFIER_TYPE = ConfigTypes.STRING
             .withPattern("(?>[a-z0-9_.-]+:)?[a-z0-9/._-]+")
             .derive(Identifier.class, Identifier::new, Identifier::toString);
@@ -234,17 +237,19 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
             assert node.getConfigType().getPlatformType() == String.class;
             @SuppressWarnings("unchecked") ConfigLeaf<String> leaf = ((ConfigLeaf<String>) node);
             EnumSerializableType type = (EnumSerializableType) leaf.getConfigType();
-            if (leaf.getAttributeValue(ClothAttributes.SUGGESTION_ENUM, ConfigTypes.BOOLEAN).orElse(false)) {
-                return configEntryBuilder.startDropdownMenu(getFieldNameKey(leaf.getName()), leaf.getValue(), s -> type.accepts(s) ? s : null)
-                        .setDefaultValue(leaf.getDefaultValue())
-                        .setSaveConsumer(leaf::setValue)
-                        .setSelections(type.getValidValues())
-                        .build();
-            } else {
+            ClothSetting.EnumHandler.EnumDisplayOption displayOption = leaf.getAttributeValue(ClothAttributes.SUGGESTION_ENUM, ENUM_DISPLAY_TYPE).orElse(ClothSetting.EnumHandler.EnumDisplayOption.BUTTON);
+            if (displayOption == ClothSetting.EnumHandler.EnumDisplayOption.BUTTON) {
                 return configEntryBuilder.startSelector(getFieldNameKey(leaf.getName()), type.getValidValues().toArray(new String[0]), leaf.getValue())
                         .setDefaultValue(leaf.getDefaultValue())
                         .setSaveConsumer(leaf::setValue)
                         .setErrorSupplier(v -> error(type, v))
+                        .build();
+            } else {
+                return configEntryBuilder.startDropdownMenu(getFieldNameKey(leaf.getName()), leaf.getValue(), s -> type.accepts(s) ? s : null)
+                        .setDefaultValue(leaf.getDefaultValue())
+                        .setSaveConsumer(leaf::setValue)
+                        .setSelections(type.getValidValues())
+                        .setSuggestionMode(displayOption == ClothSetting.EnumHandler.EnumDisplayOption.SUGGESTION_INPUT)
                         .build();
             }
         });
@@ -404,7 +409,7 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
                 entries = appendEntries(new ArrayList<>(), value, functionMap.get(value.getConfigType().getClass()));
             } else if (item instanceof ConfigBranch) {
                 ConfigBranch branch = (ConfigBranch) item;
-                if (branch.getAttributeValue(ClothAttributes.GROUP_DISPLAY, GroupDisplay.TYPE).orElse(GroupDisplay.DEFAULT).isCategoryCandidate()) {
+                if (branch.getAttributeValue(ClothAttributes.GROUP_DISPLAY, GroupDisplayOption.TYPE).orElse(GroupDisplayOption.DEFAULT).isCategoryCandidate()) {
                     String categoryKey = getFieldNameKey(branch.getName());
                     if (builder.hasCategory(categoryKey)) {
                         throw new IllegalStateException("Duplicate category "+ categoryKey);
@@ -464,8 +469,8 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
 
     private List<AbstractConfigListEntry<?>> appendSubCategory(String categoryName, List<AbstractConfigListEntry<?>> entries, ConfigBranch nestedNode) {
         String subCategoryName = (categoryName == null ? "" : (categoryName + ".")) + nestedNode.getName();
-        GroupDisplay groupDisplay = nestedNode.getAttributeValue(ClothAttributes.GROUP_DISPLAY, GroupDisplay.TYPE).orElse(GroupDisplay.DEFAULT);
-        if (groupDisplay.isTransitive()) {
+        GroupDisplayOption groupDisplayOption = nestedNode.getAttributeValue(ClothAttributes.GROUP_DISPLAY, GroupDisplayOption.TYPE).orElse(GroupDisplayOption.DEFAULT);
+        if (groupDisplayOption.isTransitive()) {
             this.addPrefixText(entries, nestedNode, getFieldNameKey(subCategoryName));
             // no addAll because raw types
             transformNodeSecondLayer(subCategoryName, nestedNode).forEach(entries::add);
@@ -473,7 +478,7 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
             appendEntries(entries, nestedNode, n -> configEntryBuilder.startSubCategory(
                     getFieldNameKey(subCategoryName),
                     transformNodeSecondLayer(subCategoryName, n)
-            ).setExpanded(groupDisplay == GroupDisplay.COLLAPSIBLE_EXPANDED).build());
+            ).setExpanded(groupDisplayOption == GroupDisplayOption.COLLAPSIBLE_EXPANDED).build());
         }
         return entries;
     }

@@ -5,7 +5,7 @@ import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.derived.ConfigTypes;
 import io.github.fablabsmc.fablabs.api.fiber.v1.tree.ConfigAttribute;
 import me.shedaniel.fiber2cloth.impl.ColorPickerFormat;
 import me.shedaniel.fiber2cloth.impl.Fiber2ClothImpl;
-import me.shedaniel.fiber2cloth.impl.GroupDisplay;
+import me.shedaniel.fiber2cloth.impl.GroupDisplayOption;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.MutableRegistry;
 import net.minecraft.util.registry.Registry;
@@ -65,15 +65,15 @@ public final class ClothAttributes {
     }
 
     public static ConfigAttribute<String> collapsible(boolean startExpanded) {
-        return ConfigAttribute.create(GROUP_DISPLAY, GroupDisplay.TYPE, startExpanded ? GroupDisplay.COLLAPSIBLE_EXPANDED : GroupDisplay.COLLAPSIBLE);
+        return ConfigAttribute.create(GROUP_DISPLAY, GroupDisplayOption.TYPE, startExpanded ? GroupDisplayOption.COLLAPSIBLE_EXPANDED : GroupDisplayOption.COLLAPSIBLE);
     }
 
     public static ConfigAttribute<String> transitive() {
-        return ConfigAttribute.create(GROUP_DISPLAY, GroupDisplay.TYPE, GroupDisplay.TRANSITIVE);
+        return ConfigAttribute.create(GROUP_DISPLAY, GroupDisplayOption.TYPE, GroupDisplayOption.TRANSITIVE);
     }
 
-    public static ConfigAttribute<Boolean> suggestionEnum() {
-        return ConfigAttribute.create(SUGGESTION_ENUM, ConfigTypes.BOOLEAN, true);
+    public static ConfigAttribute<String> enumDisplay(ClothSetting.EnumHandler.EnumDisplayOption value) {
+        return ConfigAttribute.create(SUGGESTION_ENUM, Fiber2ClothImpl.ENUM_DISPLAY_TYPE, value);
     }
 
     public static ConfigAttribute<Boolean> slider() {

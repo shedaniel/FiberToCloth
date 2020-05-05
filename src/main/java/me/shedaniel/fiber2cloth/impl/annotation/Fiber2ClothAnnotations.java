@@ -25,8 +25,8 @@ public final class Fiber2ClothAnnotations {
                 (annotation, field, pojo, builder) -> builder.withAttribute(ClothAttributes.transitive()));
         in.registerGroupProcessor(ClothSetting.CollapsibleObject.class,
                 (annotation, field, pojo, builder) -> builder.withAttribute(ClothAttributes.collapsible(annotation.startExpanded())));
-        in.registerSettingProcessor(ClothSetting.SuggestionEnumInput.class,
-                (annotation, field, pojo, builder) -> builder.withAttribute(ClothAttributes.suggestionEnum()));
+        in.registerSettingProcessor(ClothSetting.EnumHandler.class,
+                (annotation, field, pojo, builder) -> builder.withAttribute(ClothAttributes.enumDisplay(annotation.value())));
         in.registerSettingProcessor(ClothSetting.RegistryInput.class,
                 (annotation, field, pojo, builder) -> builder.withAttribute(ClothAttributes.registryInput(new Identifier(annotation.value()))));
         in.registerSettingProcessor(ClothSetting.Slider.class,

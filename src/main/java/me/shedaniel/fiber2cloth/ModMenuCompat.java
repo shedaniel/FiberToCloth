@@ -17,6 +17,7 @@ import me.shedaniel.fiber2cloth.impl.Fiber2ClothImpl;
 import net.minecraft.block.Blocks;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.world.Difficulty;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -52,6 +53,7 @@ public class ModMenuCompat implements ModMenuApi {
                         AnnotatedSettings.create()
                                 // TODO remove enum mapping
                                 .registerTypeMapping(Pojo.SecondCategory.Choice.class, ConfigTypes.makeEnum(Pojo.SecondCategory.Choice.class))
+                                .registerTypeMapping(Difficulty.class, ConfigTypes.makeEnum(Difficulty.class))
                                 .registerTypeMapping(Identifier.class, Fiber2ClothImpl.IDENTIFIER_TYPE)
                 ))
                 .fork("second.category")
@@ -85,6 +87,9 @@ public class ModMenuCompat implements ModMenuApi {
         @Setting.Constrain.Range(min = 0, max = 100)
         @Setting(comment = "This field will accept 0 - 100.")
         public int basicIntField = 100;
+
+        @ClothSetting.EnumHandler(ClothSetting.EnumHandler.EnumDisplayOption.DROPDOWN)
+        public SecondCategory.Choice doYouLikeShulkers = SecondCategory.Choice.IDK;
 
         @Setting.Group
         @ClothSetting.PrefixText
@@ -123,8 +128,11 @@ public class ModMenuCompat implements ModMenuApi {
             public float percentage = 0.5f;
 
             @ClothSetting.RequiresRestart
-            @ClothSetting.SuggestionEnumInput
+            @ClothSetting.EnumHandler(ClothSetting.EnumHandler.EnumDisplayOption.SUGGESTION_INPUT)
             public Choice yes = Choice.NO;
+
+            @ClothSetting.EnumHandler(ClothSetting.EnumHandler.EnumDisplayOption.BUTTON)
+            public Difficulty difficulty = Difficulty.HARD;
 
             enum Choice {
                 YES, NO, IDK
