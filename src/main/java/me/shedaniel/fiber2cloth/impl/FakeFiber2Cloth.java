@@ -11,15 +11,16 @@ import io.github.fablabsmc.fablabs.api.fiber.v1.tree.ConfigLeaf;
 import io.github.fablabsmc.fablabs.api.fiber.v1.tree.ConfigNode;
 import net.minecraft.client.gui.screen.Screen;
 
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class FakeFiber2Cloth implements Fiber2Cloth {
     
-    private Screen parentScreen;
-    private String title;
-    private ConfigBranch node;
+    private final Screen parentScreen;
+    private final String title;
+    private final ConfigBranch node;
     
     @Deprecated
     public FakeFiber2Cloth(Screen parentScreen, ConfigBranch node, String title) {
@@ -39,12 +40,12 @@ public class FakeFiber2Cloth implements Fiber2Cloth {
     }
     
     @Override
-    public Fiber2Cloth setDefaultCategoryNode(ConfigBranch defaultCategoryNode) {
+    public Fiber2Cloth setDefaultCategoryBranch(ConfigBranch defaultCategoryNode) {
         return this;
     }
     
     @Override
-    public ConfigBranch getDefaultCategoryNode() {
+    public ConfigBranch getDefaultCategoryBranch() {
         return node;
     }
     
@@ -54,7 +55,7 @@ public class FakeFiber2Cloth implements Fiber2Cloth {
     }
     
     @Override
-    public Fiber2Cloth registerTreeEntryFunction(ConfigNode item, Function function) {
+    public Fiber2Cloth registerNodeEntryFunction(ConfigNode item, Function<ConfigNode, List<AbstractConfigListEntry<?>>> function) {
         return this;
     }
 
@@ -64,12 +65,12 @@ public class FakeFiber2Cloth implements Fiber2Cloth {
     }
 
     @Override
-    public Map<Class<? extends SerializableType<?>>, Function<ConfigLeaf<?>, AbstractConfigListEntry<?>>> getFunctionMap() {
+    public Map<Class<? extends SerializableType<?>>, Function<ConfigLeaf<?>, List<AbstractConfigListEntry<?>>>> getFunctionMap() {
         return Maps.newHashMap();
     }
 
     @Override
-    public ConfigBranch getNode() {
+    public ConfigBranch getConfigRoot() {
         return node;
     }
     

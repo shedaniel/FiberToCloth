@@ -3,8 +3,6 @@ package me.shedaniel.fiber2cloth;
 import blue.endless.jankson.Comment;
 import io.github.fablabsmc.fablabs.api.fiber.v1.annotation.AnnotatedSettings;
 import io.github.fablabsmc.fablabs.api.fiber.v1.annotation.Setting;
-import io.github.fablabsmc.fablabs.api.fiber.v1.exception.FiberException;
-import io.github.fablabsmc.fablabs.api.fiber.v1.exception.RuntimeFiberException;
 import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.derived.ConfigTypes;
 import io.github.fablabsmc.fablabs.api.fiber.v1.tree.ConfigBranch;
 import io.github.fablabsmc.fablabs.api.fiber.v1.tree.ConfigTree;
@@ -31,56 +29,44 @@ public class ModMenuCompat implements ModMenuApi {
     @Override
     public ConfigScreenFactory<?> getModConfigScreenFactory() {
         return screen -> {
-            ConfigBranch cfg;
-            try {
-                cfg = buildConfigTree();
-            } catch (FiberException e) {
-                throw new RuntimeFiberException("Failed to load config", e);
-            }
+            ConfigBranch cfg = ConfigTree.builder()
+                    .withAttribute(ClothAttributes.transparentBackground())
+                    .withAttribute(ClothAttributes.defaultBackground("minecraft:textures/block/oak_planks.png"))
+                    .applyFromPojo(new Pojo(),
+                            AnnotatedSettings.builder()
+                                    .registerTypeMapping(Identifier.class, Fiber2ClothImpl.IDENTIFIER_TYPE)
+                                    .apply(Fiber2Cloth::configure)
+                                    .build())
+                    .fork("second.category")
+                    .withAttribute(ClothAttributes.categoryBackground("minecraft:textures/block/stone.png"))
+                    .withValue("nestedExample", ConfigTypes.STRING, "Hi")
+                    .fork("i.am.inside")
+                    .fork("i.am.inside.but.hidden")
+                    .withAttribute(ClothAttributes.transitive())
+                    .withAttribute(ClothAttributes.tooltip())
+                    .withValue("transitiveExample", ConfigTypes.makeList(ConfigTypes.DOUBLE), Collections.emptyList())
+                    .finishBranch()
+                    .beginValue("nestedNestedExample", ConfigTypes.BOOLEAN, false)
+                    .withComment("This comment is overridden by the tooltip")
+                    .withAttribute(ClothAttributes.tooltip("config.fiber2cloth.nestedNestedExample.tooltip"))
+                    .finishValue()
+                    .beginValue("nestedNestedList", ConfigTypes.makeList(ConfigTypes.STRING), Arrays.asList("hi", "no"))
+                    .withAttribute(ClothAttributes.prefixText("config.fiber2cloth.nestedNestedList.description"))
+                    .finishValue()
+                    .fork("lol")
+                    .withValue("exampleBool", ConfigTypes.BOOLEAN, false)
+                    .finishBranch()
+                    .finishBranch()
+                    .finishBranch()
+                    .build();
             ConfigBranch secondCategory = (ConfigBranch) cfg.lookup("second.category");
-            return Fiber2Cloth.create(screen, getModId(), cfg, "Fiber2Cloth Example Config").setDefaultCategoryNode(secondCategory).setSaveRunnable(() -> {
+            return Fiber2Cloth.create(screen, getModId(), cfg, "Fiber2Cloth Example Config").setDefaultCategoryBranch(secondCategory).setSaveRunnable(() -> {
                 // Here you should serialise the node into the config file.
             }).build().getScreen();
         };
     }
 
-    private ConfigBranch buildConfigTree() throws FiberException {
-        ConfigBranch cfg;
-        cfg = ConfigTree.builder()
-                .withAttribute(ClothAttributes.transparentBackground())
-                .withAttribute(ClothAttributes.defaultBackground("minecraft:textures/block/oak_planks.png"))
-                .applyFromPojo(new Pojo(), Fiber2Cloth.configure(
-                        AnnotatedSettings.create()
-                                // TODO remove enum mapping
-                                .registerTypeMapping(Pojo.SecondCategory.Choice.class, ConfigTypes.makeEnum(Pojo.SecondCategory.Choice.class))
-                                .registerTypeMapping(Difficulty.class, ConfigTypes.makeEnum(Difficulty.class))
-                                .registerTypeMapping(Identifier.class, Fiber2ClothImpl.IDENTIFIER_TYPE)
-                ))
-                .fork("second.category")
-                    .withAttribute(ClothAttributes.categoryBackground("minecraft:textures/block/stone.png"))
-                    .withValue("nestedExample", ConfigTypes.STRING, "Hi")
-                    .fork("i.am.inside")
-                        .fork("i.am.inside.but.hidden")
-                            .withAttribute(ClothAttributes.transitive())
-                            .withAttribute(ClothAttributes.tooltip())
-                            .withValue("transitiveExample", ConfigTypes.makeList(ConfigTypes.DOUBLE), Collections.emptyList())
-                        .finishBranch()
-                        .beginValue("nestedNestedExample", ConfigTypes.BOOLEAN, false)
-                            .withComment("This comment is overridden by the tooltip")
-                            .withAttribute(ClothAttributes.tooltip("config.fiber2cloth.nestedNestedExample.tooltip"))
-                        .finishValue()
-                        .beginValue("nestedNestedList", ConfigTypes.makeList(ConfigTypes.STRING), Arrays.asList("hi", "no"))
-                            .withAttribute(ClothAttributes.prefixText("config.fiber2cloth.nestedNestedList.description"))
-                        .finishValue()
-                        .fork("lol")
-                            .withValue("exampleBool", ConfigTypes.BOOLEAN, false)
-                        .finishBranch()
-                    .finishBranch()
-                .finishBranch()
-                .build();
-        return cfg;
-    }
-
+    @SuppressWarnings("unused")
     private static class Pojo {
 
         // adding a field directly to the root will cause it to be added to a "default" category

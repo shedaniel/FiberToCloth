@@ -41,19 +41,19 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
     private final Screen parentScreen;
     private String defaultCategory = "config.fiber2cloth.default.category";
     private String title;
-    private final ConfigBranch node;
-    private ConfigBranch defaultCategoryNode;
-    private final Map<Class<? extends SerializableType<?>>, Function<ConfigLeaf<?>, AbstractConfigListEntry<?>>> functionMap = Maps.newHashMap();
-    private final Map<ConfigNode, Function<ConfigNode, AbstractConfigListEntry<?>>> treeEntryMap = Maps.newHashMap();
+    private final ConfigBranch root;
+    private ConfigBranch defaultCategoryBranch;
+    private final Map<Class<? extends SerializableType<?>>, Function<ConfigLeaf<?>, List<AbstractConfigListEntry<?>>>> functionMap = Maps.newHashMap();
+    private final Map<ConfigNode, Function<ConfigNode, List<AbstractConfigListEntry<?>>>> nodeEntryMap = Maps.newHashMap();
     private final ConfigEntryBuilder configEntryBuilder = ConfigEntryBuilder.create();
     private Runnable saveRunnable;
     private Consumer<Screen> afterInitConsumer = screen -> {};
     
     @Deprecated
-    public Fiber2ClothImpl(Screen parentScreen, String modId, ConfigBranch node, String title) {
+    public Fiber2ClothImpl(Screen parentScreen, String modId, ConfigBranch root, String title) {
         this.parentScreen = parentScreen;
-        this.node = node;
-        this.defaultCategoryNode = node;
+        this.root = root;
+        this.defaultCategoryBranch = root;
         this.modId = modId;
         this.title = title;
         initDefaultFunctionMap();
@@ -89,16 +89,16 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
     }
 
     @Override
-    public Fiber2Cloth setDefaultCategoryNode(ConfigBranch defaultCategoryNode) {
-        if (!node.getItems().contains(defaultCategoryNode))
+    public Fiber2Cloth setDefaultCategoryBranch(ConfigBranch defaultCategoryNode) {
+        if (!root.getItems().contains(defaultCategoryNode))
             throw new IllegalArgumentException("The default category node must be on the first level!");
-        this.defaultCategoryNode = Objects.requireNonNull(defaultCategoryNode);
+        this.defaultCategoryBranch = Objects.requireNonNull(defaultCategoryNode);
         return this;
     }
     
     @Override
-    public ConfigBranch getDefaultCategoryNode() {
-        return defaultCategoryNode;
+    public ConfigBranch getDefaultCategoryBranch() {
+        return defaultCategoryBranch;
     }
     
     @Override
@@ -119,31 +119,34 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
     }
     
     @Override
-    public Fiber2Cloth registerTreeEntryFunction(ConfigNode node, Function<ConfigNode, AbstractConfigListEntry<?>> function) {
-        treeEntryMap.put(node, function);
+    public Fiber2Cloth registerNodeEntryFunction(ConfigNode node, Function<ConfigNode, List<AbstractConfigListEntry<?>>> function) {
+        nodeEntryMap.put(node, function);
         return this;
     }
 
     @Override
-    public Map<Class<? extends SerializableType<?>>, Function<ConfigLeaf<?>, AbstractConfigListEntry<?>>> getFunctionMap() {
+    public Map<Class<? extends SerializableType<?>>, Function<ConfigLeaf<?>, List<AbstractConfigListEntry<?>>>> getFunctionMap() {
         return functionMap;
     }
 
     @Override
     public <R, S, T extends SerializableType<S>> Fiber2Cloth registerLeafEntryFunction(ConfigType<R, S, T> type, GuiEntryProvider<R, S, T> function) {
         @SuppressWarnings("unchecked") Class<T> cls = (Class<T>) type.getSerializedType().getClass();
-        Function<ConfigLeaf<?>, AbstractConfigListEntry<?>> f = leaf -> {
+        Function<ConfigLeaf<?>, List<AbstractConfigListEntry<?>>> f = leaf -> {
             if (type.getSerializedType().isAssignableFrom(leaf.getConfigType())) {
                 PropertyMirror<R> mirror = PropertyMirror.create(type);
                 mirror.mirror(leaf);
                 T actualType = cls.cast(leaf.getConfigType());
                 @SuppressWarnings("unchecked") ConfigLeaf<S> l = (ConfigLeaf<S>) leaf;
-                return function.apply(l, actualType, mirror, type.toRuntimeType(l.getDefaultValue()), v -> error(type, actualType, v));
+                AbstractConfigListEntry<?> entry = function.apply(l, actualType, mirror, type.toRuntimeType(l.getDefaultValue()), v -> error(type, actualType, v));
+                if (entry != null) {
+                    return Collections.singletonList(entry);
+                }
             }
             return null;
         };
         functionMap.merge(cls, f, (f1, f2) -> v -> {
-            AbstractConfigListEntry<?> res = f2.apply(v);
+            List<AbstractConfigListEntry<?>> res = f2.apply(v);
             return res == null ? f1.apply(v) : res;
         });
         return this;
@@ -234,23 +237,23 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
                     }).build();
         });
         this.functionMap.put(EnumSerializableType.class, node -> {
-            assert node.getConfigType().getPlatformType() == String.class;
+            assert node.getConfigType().getErasedPlatformType() == String.class;
             @SuppressWarnings("unchecked") ConfigLeaf<String> leaf = ((ConfigLeaf<String>) node);
             EnumSerializableType type = (EnumSerializableType) leaf.getConfigType();
             ClothSetting.EnumHandler.EnumDisplayOption displayOption = leaf.getAttributeValue(ClothAttributes.SUGGESTION_ENUM, ENUM_DISPLAY_TYPE).orElse(ClothSetting.EnumHandler.EnumDisplayOption.BUTTON);
             if (displayOption == ClothSetting.EnumHandler.EnumDisplayOption.BUTTON) {
-                return configEntryBuilder.startSelector(getFieldNameKey(leaf.getName()), type.getValidValues().toArray(new String[0]), leaf.getValue())
+                return Collections.singletonList(configEntryBuilder.startSelector(getFieldNameKey(leaf.getName()), type.getValidValues().toArray(new String[0]), leaf.getValue())
                         .setDefaultValue(leaf.getDefaultValue())
                         .setSaveConsumer(leaf::setValue)
                         .setErrorSupplier(v -> error(type, v))
-                        .build();
+                        .build());
             } else {
-                return configEntryBuilder.startDropdownMenu(getFieldNameKey(leaf.getName()), leaf.getValue(), s -> type.accepts(s) ? s : null)
+                return Collections.singletonList(configEntryBuilder.startDropdownMenu(getFieldNameKey(leaf.getName()), leaf.getValue(), s -> type.accepts(s) ? s : null)
                         .setDefaultValue(leaf.getDefaultValue())
                         .setSaveConsumer(leaf::setValue)
                         .setSelections(type.getValidValues())
                         .setSuggestionMode(displayOption == ClothSetting.EnumHandler.EnumDisplayOption.SUGGESTION_INPUT)
-                        .build();
+                        .build());
             }
         });
         registerLeafEntryFunction(ConfigTypes.STRING, (leaf, type, mirror, defaultValue, errorSupplier) -> configEntryBuilder
@@ -309,8 +312,8 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
     }
 
     @Override
-    public ConfigBranch getNode() {
-        return node;
+    public ConfigBranch getConfigRoot() {
+        return root;
     }
     
     @Override
@@ -344,14 +347,14 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
     public Result build() {
         try {
             ConfigBuilder builder = ConfigBuilder.create().setTitle(getTitle()).setParentScreen(getParentScreen());
-            transformNode(builder, getNode());
-            getNode().getAttributeValue(ClothAttributes.DEFAULT_BACKGROUND, IDENTIFIER_TYPE).ifPresent(builder::setDefaultBackgroundTexture);
-            getNode().getAttributeValue(ClothAttributes.TRANSPARENT_BACKGROUND, ConfigTypes.BOOLEAN).ifPresent(builder::setTransparentBackground);
-            String defaultS = defaultCategoryNode == node ? getDefaultCategoryKey() : getFieldNameKey(defaultCategoryNode.getName());
+            transformNode(builder, getConfigRoot());
+            getConfigRoot().getAttributeValue(ClothAttributes.DEFAULT_BACKGROUND, IDENTIFIER_TYPE).ifPresent(builder::setDefaultBackgroundTexture);
+            getConfigRoot().getAttributeValue(ClothAttributes.TRANSPARENT_BACKGROUND, ConfigTypes.BOOLEAN).ifPresent(builder::setTransparentBackground);
+            String defaultS = defaultCategoryBranch == root ? getDefaultCategoryKey() : getFieldNameKey(defaultCategoryBranch.getName());
             if (builder.hasCategory(defaultS)) {
                 builder.setFallbackCategory(builder.getOrCreateCategory(defaultS));
             } else {
-                if (defaultCategoryNode != node) {
+                if (defaultCategoryBranch != root) {
                     new IllegalStateException("Illegal default config category!").printStackTrace();
                     return new Result() {
                         @Override
@@ -400,12 +403,12 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
         for (ConfigNode item : configNode.getItems()) {
             ConfigCategory category;
             List<AbstractConfigListEntry<?>> entries;
-            if (treeEntryMap.containsKey(item)) {
-                category = getOrCreateCategory(builder, getDefaultCategoryKey(), this.node);
-                entries = appendEntries(new ArrayList<>(), item, treeEntryMap.get(item));
+            if (nodeEntryMap.containsKey(item)) {
+                category = getOrCreateCategory(builder, getDefaultCategoryKey(), this.root);
+                entries = appendEntries(new ArrayList<>(), item, nodeEntryMap.get(item));
             } else if (item instanceof ConfigLeaf<?>) {
                 ConfigLeaf<?> value = (ConfigLeaf<?>) item;
-                category = getOrCreateCategory(builder, getDefaultCategoryKey(), this.node);
+                category = getOrCreateCategory(builder, getDefaultCategoryKey(), this.root);
                 entries = appendEntries(new ArrayList<>(), value, functionMap.get(value.getConfigType().getClass()));
             } else if (item instanceof ConfigBranch) {
                 ConfigBranch branch = (ConfigBranch) item;
@@ -417,7 +420,7 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
                     category = getOrCreateCategory(builder, categoryKey, branch);
                     entries = transformNodeFirstLayer(branch.getName(), branch);
                 } else {
-                    category = getOrCreateCategory(builder, getDefaultCategoryKey(), this.node);
+                    category = getOrCreateCategory(builder, getDefaultCategoryKey(), this.root);
                     entries = appendSubCategory(null, new ArrayList<>(), branch);
                 }
             } else {
@@ -436,8 +439,8 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
     private List<AbstractConfigListEntry<?>> transformNodeFirstLayer(String categoryName, ConfigBranch configNode) {
         List<AbstractConfigListEntry<?>> category = new ArrayList<>(configNode.getItems().size());
         for (ConfigNode item : configNode.getItems()) {
-            if (treeEntryMap.containsKey(item)) {
-                appendEntries(category, configNode, treeEntryMap.get(item));
+            if (nodeEntryMap.containsKey(item)) {
+                appendEntries(category, configNode, nodeEntryMap.get(item));
             } else if (item instanceof ConfigLeaf<?>) {
                 ConfigLeaf<?> value = (ConfigLeaf<?>) item;
                 appendEntries(category, value, functionMap.get(value.getConfigType().getClass()));
@@ -453,8 +456,8 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
     private List<AbstractConfigListEntry> transformNodeSecondLayer(String categoryName, ConfigBranch nestedNode) {
         List<AbstractConfigListEntry<?>> entries = new ArrayList<>(nestedNode.getItems().size());
         for(ConfigNode item : nestedNode.getItems()) {
-            if (treeEntryMap.containsKey(item)) {
-                appendEntries(entries, nestedNode, treeEntryMap.get(item));
+            if (nodeEntryMap.containsKey(item)) {
+                appendEntries(entries, nestedNode, nodeEntryMap.get(item));
             } else if (item instanceof ConfigLeaf<?>) {
                 ConfigLeaf<?> value = (ConfigLeaf<?>) item;
                 appendEntries(entries, value, functionMap.get(value.getConfigType().getClass()));
@@ -475,35 +478,37 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
             // no addAll because raw types
             transformNodeSecondLayer(subCategoryName, nestedNode).forEach(entries::add);
         } else {
-            appendEntries(entries, nestedNode, n -> configEntryBuilder.startSubCategory(
+            appendEntries(entries, nestedNode, n -> Collections.singletonList(configEntryBuilder.startSubCategory(
                     getFieldNameKey(subCategoryName),
                     transformNodeSecondLayer(subCategoryName, n)
-            ).setExpanded(groupDisplayOption == GroupDisplayOption.COLLAPSIBLE_EXPANDED).build());
+            ).setExpanded(groupDisplayOption == GroupDisplayOption.COLLAPSIBLE_EXPANDED).build()));
         }
         return entries;
     }
 
-    private <T extends ConfigNode> List<AbstractConfigListEntry<?>> appendEntries(List<AbstractConfigListEntry<?>> category, T value, Function<T, AbstractConfigListEntry<?>> factory) {
+    private <T extends ConfigNode> List<AbstractConfigListEntry<?>> appendEntries(List<AbstractConfigListEntry<?>> category, T value, Function<T, List<AbstractConfigListEntry<?>>> factory) {
         if (factory != null && !value.getAttributeValue(ClothAttributes.EXCLUDED, ConfigTypes.BOOLEAN).orElse(false)) {
-            AbstractConfigListEntry<?> entry = factory.apply(value);
-            if (entry instanceof TooltipListEntry<?>) {
-                Optional<String> rawTooltip = value.getAttributeValue(ClothAttributes.TOOLTIP, ConfigTypes.STRING);
-                Optional<String[]> tooltip;
-                if (rawTooltip.isPresent()) {
-                    tooltip = rawTooltip
-                            .map(key -> key.isEmpty() ? entry.getFieldName() + "@Tooltip" : key)
-                            .map(Fiber2ClothImpl::gatherLocalizedLines)
-                            .map(l -> l.toArray(new String[0]));
-                } else {
-                    String comment = value instanceof Commentable ? ((Commentable) value).getComment() : null;
-                    tooltip = Optional.ofNullable(comment).map(s -> s.split("\n"));
+            List<AbstractConfigListEntry<?>> entries = factory.apply(value);
+            for (AbstractConfigListEntry<?> entry : entries) {
+                if (entry instanceof TooltipListEntry<?>) {
+                    Optional<String> rawTooltip = value.getAttributeValue(ClothAttributes.TOOLTIP, ConfigTypes.STRING);
+                    Optional<String[]> tooltip;
+                    if (rawTooltip.isPresent()) {
+                        tooltip = rawTooltip
+                                .map(key -> key.isEmpty() ? entry.getFieldName() + "@Tooltip" : key)
+                                .map(Fiber2ClothImpl::gatherLocalizedLines)
+                                .map(l -> l.toArray(new String[0]));
+                    } else {
+                        String comment = value instanceof Commentable ? ((Commentable) value).getComment() : null;
+                        tooltip = Optional.ofNullable(comment).map(s -> s.split("\n"));
+                    }
+                    ((TooltipListEntry<?>) entry).setTooltipSupplier(() -> tooltip);
                 }
-                ((TooltipListEntry<?>) entry).setTooltipSupplier(() -> tooltip);
+                this.addPrefixText(category, value, entry.getFieldName());
+                value.getAttributeValue(ClothAttributes.REQUIRES_RESTART, ConfigTypes.BOOLEAN)
+                        .ifPresent(entry::setRequiresRestart);
+                category.add(entry);
             }
-            this.addPrefixText(category, value, entry.getFieldName());
-            value.getAttributeValue(ClothAttributes.REQUIRES_RESTART, ConfigTypes.BOOLEAN)
-                    .ifPresent(entry::setRequiresRestart);
-            category.add(entry);
         }
         return category;
     }

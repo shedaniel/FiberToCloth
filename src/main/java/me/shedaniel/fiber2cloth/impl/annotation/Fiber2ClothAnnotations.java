@@ -6,7 +6,7 @@ import me.shedaniel.fiber2cloth.api.ClothSetting;
 import net.minecraft.util.Identifier;
 
 public final class Fiber2ClothAnnotations {
-    public static void configure(AnnotatedSettings in) {
+    public static void configure(AnnotatedSettings.Builder in) {
         in.registerGroupProcessor(ClothSetting.CategoryBackground.class,
                 (annotation, field, pojo, builder) -> builder.withAttribute(ClothAttributes.categoryBackground(annotation.value())));
         in.registerGroupProcessor(ClothSetting.Excluded.class,
