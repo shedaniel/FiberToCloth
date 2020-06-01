@@ -1,3 +1,30 @@
+/*
+ * This is free and unencumbered software released into the public domain.
+ *
+ * Anyone is free to copy, modify, publish, use, compile, sell, or
+ * distribute this software, either in source code form or as a compiled
+ * binary, for any purpose, commercial or non-commercial, and by any
+ * means.
+ *
+ * In jurisdictions that recognize copyright laws, the author or authors
+ * of this software dedicate any and all copyright interest in the
+ * software to the public domain. We make this dedication for the benefit
+ * of the public at large and to the detriment of our heirs and
+ * successors. We intend this dedication to be an overt act of
+ * relinquishment in perpetuity of all present and future rights to this
+ * software under copyright law.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * For more information, please refer to <http://unlicense.org>
+ */
+
 package me.shedaniel.fiber2cloth.api;
 
 import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.EnumSerializableType;
@@ -10,7 +37,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 public @interface ClothSetting {
-
+    
     /**
      * Sets the background of a specific category in the config GUI
      */
@@ -19,7 +46,7 @@ public @interface ClothSetting {
     @interface CategoryBackground {
         String value();
     }
-
+    
     /**
      * Removes the field from the config GUI.
      */
@@ -27,11 +54,11 @@ public @interface ClothSetting {
     @Target(ElementType.FIELD)
     @interface Excluded {
     }
-
+    
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.FIELD)
     @interface RequiresRestart {}
-
+    
     /**
      * Applies to {@linkplain io.github.fablabsmc.fablabs.api.fiber.v1.annotation.Setting.Group setting groups}.
      * Adds GUI entries for the field's inner fields at the same level as this field.
@@ -43,7 +70,7 @@ public @interface ClothSetting {
     @Target(ElementType.FIELD)
     @interface TransitiveObject {
     }
-
+    
     /**
      * Applies to {@linkplain io.github.fablabsmc.fablabs.api.fiber.v1.annotation.Setting.Group setting groups}.
      * Adds GUI entries for the field's inner fields in a collapsible section.
@@ -57,7 +84,7 @@ public @interface ClothSetting {
     @interface CollapsibleObject {
         boolean startExpanded() default false;
     }
-
+    
     /**
      * Applies a tooltip to list entries that support it, defined in your lang file.
      */
@@ -77,11 +104,12 @@ public @interface ClothSetting {
          * "mymod.config.entry@Tooltip[1]": "First line",
          * "mymod.config.entry@Tooltip[2]": "Second line"
          * }</pre>
+         *
          * @see ClothAttributes#tooltip(String)
          */
         String value() default "";
     }
-
+    
     /**
      * Applies a section of text right before this entry, defined in your lang file.
      */
@@ -101,11 +129,12 @@ public @interface ClothSetting {
          * "mymod.config.entry@PrefixText[1]": "First line",
          * "mymod.config.entry@PrefixText[2]": "Second line"
          * }</pre>
+         *
          * @see ClothAttributes#prefixText(String)
          */
         String value() default "";
     }
-
+    
     /**
      * If applied to an enum field (or any field that is converted to an
      * {@link EnumSerializableType}, defines how the enum is displayed.
@@ -114,7 +143,7 @@ public @interface ClothSetting {
     @Target(ElementType.FIELD)
     @interface EnumHandler {
         EnumDisplayOption value();
-
+        
         enum EnumDisplayOption {
             /**
              * Displays the setting as a cycling button. This is the default option.
@@ -132,16 +161,17 @@ public @interface ClothSetting {
             SUGGESTION_INPUT
         }
     }
-
+    
     /**
      * Applies to numerical settings (types converted to a {@link io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.DecimalSerializableType}).
      * Replaces the default number input with a slider that uses the type's minimum, maximum, and step
+     *
      * @see io.github.fablabsmc.fablabs.api.fiber.v1.annotation.Setting.Constrain.Range
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.FIELD)
     @interface Slider {}
-
+    
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.FIELD)
     @interface RegistryInput {
@@ -156,7 +186,7 @@ public @interface ClothSetting {
          */
         String value();
     }
-
+    
     /**
      * Applies to a setting of type {@link io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.derived.ConfigTypes#INTEGER}.
      * Replaces the default number input with a color picker.

@@ -1,3 +1,30 @@
+/*
+ * This is free and unencumbered software released into the public domain.
+ *
+ * Anyone is free to copy, modify, publish, use, compile, sell, or
+ * distribute this software, either in source code form or as a compiled
+ * binary, for any purpose, commercial or non-commercial, and by any
+ * means.
+ *
+ * In jurisdictions that recognize copyright laws, the author or authors
+ * of this software dedicate any and all copyright interest in the
+ * software to the public domain. We make this dedication for the benefit
+ * of the public at large and to the detriment of our heirs and
+ * successors. We intend this dedication to be an overt act of
+ * relinquishment in perpetuity of all present and future rights to this
+ * software under copyright law.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * For more information, please refer to <http://unlicense.org>
+ */
+
 package me.shedaniel.fiber2cloth.impl;
 
 import com.google.common.collect.Maps;
@@ -7,7 +34,6 @@ import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.SerializableType;
 import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.derived.ConfigType;
 import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.derived.ConfigTypes;
 import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.derived.EnumConfigType;
-import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.derived.StringConfigType;
 import io.github.fablabsmc.fablabs.api.fiber.v1.tree.*;
 import me.shedaniel.clothconfig2.api.AbstractConfigListEntry;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
@@ -16,27 +42,22 @@ import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 import me.shedaniel.clothconfig2.gui.entries.DropdownBoxEntry;
 import me.shedaniel.clothconfig2.gui.entries.TooltipListEntry;
 import me.shedaniel.clothconfig2.impl.builders.DropdownMenuBuilder;
-import me.shedaniel.fiber2cloth.api.ClothAttributes;
-import me.shedaniel.fiber2cloth.api.ClothSetting;
-import me.shedaniel.fiber2cloth.api.Fiber2Cloth;
-import me.shedaniel.fiber2cloth.api.GuiEntryProvider;
+import me.shedaniel.fiber2cloth.api.*;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class Fiber2ClothImpl implements Fiber2Cloth {
-
+    
     public static final EnumConfigType<ClothSetting.EnumHandler.EnumDisplayOption> ENUM_DISPLAY_TYPE = ConfigTypes.makeEnum(ClothSetting.EnumHandler.EnumDisplayOption.class);
-    public static final StringConfigType<Identifier> IDENTIFIER_TYPE = ConfigTypes.STRING
-            .withPattern("(?>[a-z0-9_.-]+:)?[a-z0-9/._-]+")
-            .derive(Identifier.class, Identifier::new, Identifier::toString);
-
+    
     private final String modId;
     private final Screen parentScreen;
     private String defaultCategory = "config.fiber2cloth.default.category";
@@ -58,7 +79,7 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
         this.title = title;
         initDefaultFunctionMap();
     }
-
+    
     private static <S, T> Optional<String> error(ConfigType<T, S, ?> type, SerializableType<S> constraints, T value) {
         try {
             S v = type.toSerializedType(value);
@@ -67,14 +88,14 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
             return Optional.of(I18n.translate("error.fiber2cloth.when.casting", e.getMessage()));
         }
     }
-
+    
     private static <S> Optional<String> error(SerializableType<S> constraints, S v) {
         if (!constraints.accepts(v)) {
             return Optional.of(I18n.translate("error.fiber2cloth.invalid.value", v, constraints));
         }
         return Optional.empty();
     }
-
+    
     private static List<String> gatherLocalizedLines(String tt) {
         List<String> lines = new ArrayList<>();
         if (I18n.hasTranslation(tt)) {
@@ -87,7 +108,7 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
         }
         return lines;
     }
-
+    
     @Override
     public Fiber2Cloth setDefaultCategoryBranch(ConfigBranch defaultCategoryNode) {
         if (!root.getItems().contains(defaultCategoryNode))
@@ -123,12 +144,12 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
         nodeEntryMap.put(node, function);
         return this;
     }
-
+    
     @Override
     public Map<Class<? extends SerializableType<?>>, Function<ConfigLeaf<?>, List<AbstractConfigListEntry<?>>>> getFunctionMap() {
         return functionMap;
     }
-
+    
     @Override
     public <R, S, T extends SerializableType<S>> Fiber2Cloth registerLeafEntryFunction(ConfigType<R, S, T> type, GuiEntryProvider<R, S, T> function) {
         @SuppressWarnings("unchecked") Class<T> cls = (Class<T>) type.getSerializedType().getClass();
@@ -138,12 +159,12 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
                 mirror.mirror(leaf);
                 T actualType = cls.cast(leaf.getConfigType());
                 @SuppressWarnings("unchecked") ConfigLeaf<S> l = (ConfigLeaf<S>) leaf;
-                AbstractConfigListEntry<?> entry = function.apply(l, actualType, mirror, type.toRuntimeType(l.getDefaultValue()), v -> error(type, actualType, v));
-                if (entry != null) {
-                    return Collections.singletonList(entry);
+                List<AbstractConfigListEntry<?>> entries = function.apply(l, actualType, mirror, type.toRuntimeType(l.getDefaultValue()), v -> error(type, actualType, v));
+                if (entries != null) {
+                    return entries;
                 }
             }
-            return null;
+            return Collections.emptyList();
         };
         functionMap.merge(cls, f, (f1, f2) -> v -> {
             List<AbstractConfigListEntry<?>> res = f2.apply(v);
@@ -151,7 +172,7 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
         });
         return this;
     }
-
+    
     private void initDefaultFunctionMap() {
         registerLeafEntryFunction(ConfigTypes.DOUBLE, (leaf, type, mirror, defaultValue, errorSupplier) -> {
             if (leaf.getAttributeValue(ClothAttributes.SLIDER, ConfigTypes.BOOLEAN).orElse(false)) {
@@ -161,25 +182,28 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
                 BigDecimal step = type.getIncrement();
                 BigDecimal min = type.getMinimum();
                 BigDecimal max = type.getMaximum();
-                long scaledCurrent = leaf.getValue().subtract(type.getMinimum()).divide(type.getIncrement(), BigDecimal.ROUND_DOWN).longValue();
-                long scaledDefault = leaf.getDefaultValue().subtract(type.getMinimum()).divide(type.getIncrement(), BigDecimal.ROUND_DOWN).longValue();
-                long scaledMax = max.subtract(type.getMinimum()).divide(type.getIncrement(), BigDecimal.ROUND_DOWN).longValue();
-                return configEntryBuilder.startLongSlider(getFieldNameKey(leaf.getName()), scaledCurrent, 0, scaledMax)
+                long scaledCurrent = leaf.getValue().subtract(type.getMinimum()).divide(type.getIncrement(), RoundingMode.FLOOR).longValue();
+                long scaledDefault = leaf.getDefaultValue().subtract(type.getMinimum()).divide(type.getIncrement(), RoundingMode.FLOOR).longValue();
+                long scaledMax = max.subtract(type.getMinimum()).divide(type.getIncrement(), RoundingMode.FLOOR).longValue();
+                return Collections.singletonList(configEntryBuilder
+                        .startLongSlider(getFieldNameKey(leaf.getName()), scaledCurrent, 0, scaledMax)
                         .setDefaultValue(scaledDefault)
                         .setSaveConsumer(v -> leaf.setValue(BigDecimal.valueOf(v).multiply(step).add(min)))
                         .setErrorSupplier(v -> error(type, BigDecimal.valueOf(v).multiply(step).add(min)))
                         .setTextGetter(v -> {
                             BigDecimal val = BigDecimal.valueOf(v);
-                            return I18n.translate("gui.fiber2cloth.slider.value", val.multiply(step).add(min).setScale(step.scale(), BigDecimal.ROUND_DOWN));
+                            return I18n.translate("gui.fiber2cloth.slider.value", val.multiply(step).add(min).setScale(step.scale(), RoundingMode.FLOOR));
                         })
-                        .build();
+                        .build()
+                );
             } else {
-                return configEntryBuilder
+                return Collections.singletonList(configEntryBuilder
                         .startDoubleField(getFieldNameKey(leaf.getName()), mirror.getValue())
                         .setDefaultValue(defaultValue)
                         .setSaveConsumer(mirror::setValue)
                         .setErrorSupplier(errorSupplier)
-                        .build();
+                        .build()
+                );
             }
         });
         registerLeafEntryFunction(ConfigTypes.LONG, (leaf, type, mirror, defaultValue, errorSupplier) -> {
@@ -196,23 +220,27 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
                 return null;
             }
             if (leaf.getAttributeValue(ClothAttributes.SLIDER, ConfigTypes.BOOLEAN).orElse(false)) {
-                long scaledCurrent = leaf.getValue().subtract(type.getMinimum()).divide(type.getIncrement(), BigDecimal.ROUND_DOWN).longValue();
-                long scaledDefault = leaf.getDefaultValue().subtract(type.getMinimum()).divide(type.getIncrement(), BigDecimal.ROUND_DOWN).longValue();
-                long scaledMax = type.getMaximum().subtract(type.getMinimum()).divide(type.getIncrement(), BigDecimal.ROUND_DOWN).longValue();
-                return configEntryBuilder.startLongSlider(getFieldNameKey(leaf.getName()), scaledCurrent, 0, scaledMax)
+                long scaledCurrent = leaf.getValue().subtract(type.getMinimum()).divide(type.getIncrement(), RoundingMode.FLOOR).longValue();
+                long scaledDefault = leaf.getDefaultValue().subtract(type.getMinimum()).divide(type.getIncrement(), RoundingMode.FLOOR).longValue();
+                long scaledMax = type.getMaximum().subtract(type.getMinimum()).divide(type.getIncrement(), RoundingMode.FLOOR).longValue();
+                return Collections.singletonList(configEntryBuilder
+                        .startLongSlider(getFieldNameKey(leaf.getName()), scaledCurrent, 0, scaledMax)
                         .setDefaultValue(scaledDefault)
                         .setSaveConsumer(v -> mirror.setValue(v * step + min))
                         .setErrorSupplier(v -> error(ConfigTypes.LONG, type, v * step + min))
                         .setTextGetter(v -> I18n.translate("gui.fiber2cloth.slider.value", v * step + min))
-                        .build();
+                        .build()
+                );
             } else {
-                return configEntryBuilder.startLongField(getFieldNameKey(leaf.getName()), mirror.getValue())
+                return Collections.singletonList(configEntryBuilder
+                        .startLongField(getFieldNameKey(leaf.getName()), mirror.getValue())
                         .setDefaultValue(defaultValue)
                         .setSaveConsumer(mirror::setValue)
                         .setErrorSupplier(errorSupplier)
                         .setMin(min)
                         .setMax(max)
-                        .build();
+                        .build()
+                );
             }
         });
         registerLeafEntryFunction(ConfigTypes.INTEGER, (leaf, type, mirror, defaultValue, errorSupplier) ->
@@ -223,10 +251,12 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
                         .setErrorSupplier(errorSupplier)
                         .setAlphaMode(t == ColorPickerFormat.ARGB)
                         .build()
-                ).orElse(null));
+                ).map(Collections::<AbstractConfigListEntry<?>>singletonList).orElse(null)
+        );
         registerLeafEntryFunction(ConfigTypes.BOOLEAN, (leaf, type, mirror, defaultValue, errorSupplier) -> {
             String s = getFieldNameKey(leaf.getName());
-            return configEntryBuilder.startBooleanToggle(s, mirror.getValue())
+            return Collections.singletonList(configEntryBuilder
+                    .startBooleanToggle(s, mirror.getValue())
                     .setDefaultValue(defaultValue)
                     .setSaveConsumer(mirror::setValue)
                     .setErrorSupplier(errorSupplier)
@@ -234,7 +264,8 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
                         if (I18n.hasTranslation(s + ".boolean." + bool))
                             return I18n.translate(s + ".boolean." + bool);
                         return bool ? "§aYes" : "§cNo";
-                    }).build();
+                    }).build()
+            );
         });
         this.functionMap.put(EnumSerializableType.class, node -> {
             assert node.getConfigType().getErasedPlatformType() == String.class;
@@ -242,27 +273,33 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
             EnumSerializableType type = (EnumSerializableType) leaf.getConfigType();
             ClothSetting.EnumHandler.EnumDisplayOption displayOption = leaf.getAttributeValue(ClothAttributes.SUGGESTION_ENUM, ENUM_DISPLAY_TYPE).orElse(ClothSetting.EnumHandler.EnumDisplayOption.BUTTON);
             if (displayOption == ClothSetting.EnumHandler.EnumDisplayOption.BUTTON) {
-                return Collections.singletonList(configEntryBuilder.startSelector(getFieldNameKey(leaf.getName()), type.getValidValues().toArray(new String[0]), leaf.getValue())
+                return Collections.singletonList(configEntryBuilder
+                        .startSelector(getFieldNameKey(leaf.getName()), type.getValidValues().toArray(new String[0]), leaf.getValue())
                         .setDefaultValue(leaf.getDefaultValue())
                         .setSaveConsumer(leaf::setValue)
                         .setErrorSupplier(v -> error(type, v))
-                        .build());
+                        .build()
+                );
             } else {
-                return Collections.singletonList(configEntryBuilder.startDropdownMenu(getFieldNameKey(leaf.getName()), leaf.getValue(), s -> type.accepts(s) ? s : null)
+                return Collections.singletonList(configEntryBuilder
+                        .startDropdownMenu(getFieldNameKey(leaf.getName()), leaf.getValue(), s -> type.accepts(s) ? s : null)
                         .setDefaultValue(leaf.getDefaultValue())
                         .setSaveConsumer(leaf::setValue)
                         .setSelections(type.getValidValues())
                         .setSuggestionMode(displayOption == ClothSetting.EnumHandler.EnumDisplayOption.SUGGESTION_INPUT)
-                        .build());
+                        .build()
+                );
             }
         });
-        registerLeafEntryFunction(ConfigTypes.STRING, (leaf, type, mirror, defaultValue, errorSupplier) -> configEntryBuilder
-                .startStrField(getFieldNameKey(leaf.getName()), mirror.getValue())
-                .setDefaultValue(defaultValue)
-                .setSaveConsumer(mirror::setValue)
-                .setErrorSupplier(errorSupplier).build());
-        registerLeafEntryFunction(IDENTIFIER_TYPE, (leaf, type, mirror, defaultValue, suggestedErrorSupplier) ->
-                leaf.getAttributeValue(ClothAttributes.REGISTRY_INPUT, IDENTIFIER_TYPE).map(Registry.REGISTRIES::get).map(registry -> {
+        registerLeafEntryFunction(ConfigTypes.STRING, (leaf, type, mirror, defaultValue, errorSupplier) ->
+                Collections.singletonList(configEntryBuilder
+                        .startStrField(getFieldNameKey(leaf.getName()), mirror.getValue())
+                        .setDefaultValue(defaultValue)
+                        .setSaveConsumer(mirror::setValue)
+                        .setErrorSupplier(errorSupplier).build()
+                ));
+        registerLeafEntryFunction(DefaultTypes.IDENTIFIER_TYPE, (leaf, type, mirror, defaultValue, suggestedErrorSupplier) ->
+                leaf.getAttributeValue(ClothAttributes.REGISTRY_INPUT, DefaultTypes.IDENTIFIER_TYPE).map(Registry.REGISTRIES::get).map(registry -> {
                     DropdownBoxEntry.SelectionTopCellElement<Identifier> topCellElement;
                     if (registry == Registry.BLOCK) {
                         topCellElement = DropdownMenuBuilder.TopCellElementBuilder.ofBlockIdentifier(Registry.BLOCK.get(mirror.getValue()));
@@ -271,46 +308,55 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
                     } else {
                         topCellElement = DropdownMenuBuilder.TopCellElementBuilder.of(mirror.getValue(), s -> Optional.ofNullable(Identifier.tryParse(s)).filter(registry::containsId).orElse(null));
                     }
-                    return configEntryBuilder.startDropdownMenu(getFieldNameKey(leaf.getName()), topCellElement)
+                    return configEntryBuilder
+                            .startDropdownMenu(getFieldNameKey(leaf.getName()), topCellElement)
                             .setSelections(registry.getIds())
                             .setDefaultValue(defaultValue)
                             .setSaveConsumer(mirror::setValue)
                             .build();
-                }).orElse(null));
-        registerLeafEntryFunction(ConfigTypes.makeList(ConfigTypes.DOUBLE), (leaf, type, mirror, defaultValue, errorSupplier) -> configEntryBuilder
-                .startDoubleList(getFieldNameKey(leaf.getName()), mirror.getValue())
-                .setDefaultValue(defaultValue)
-                .setExpanded(true)
-                .setSaveConsumer(mirror::setValue)
-                .setErrorSupplier(errorSupplier)
-                .build());
-        registerLeafEntryFunction(ConfigTypes.makeList(ConfigTypes.LONG), (leaf, type, mirror, defaultValue, errorSupplier) -> configEntryBuilder
-                .startLongList(getFieldNameKey(leaf.getName()), mirror.getValue())
-                .setDefaultValue(defaultValue)
-                .setExpanded(true)
-                .setSaveConsumer(mirror::setValue)
-                .setErrorSupplier(errorSupplier)
-                .build());
-        registerLeafEntryFunction(ConfigTypes.makeList(ConfigTypes.INTEGER), (leaf, type, mirror, defaultValue, errorSupplier) -> configEntryBuilder
-                .startIntList(getFieldNameKey(leaf.getName()), mirror.getValue())
-                .setDefaultValue(defaultValue)
-                .setExpanded(true)
-                .setSaveConsumer(mirror::setValue)
-                .setErrorSupplier(errorSupplier)
-                .build());
-        registerLeafEntryFunction(ConfigTypes.makeList(ConfigTypes.STRING), (leaf, type, mirror, defaultValue, errorSupplier) -> configEntryBuilder
-                .startStrList(getFieldNameKey(leaf.getName()), mirror.getValue())
-                .setDefaultValue(defaultValue)
-                .setExpanded(true)
-                .setSaveConsumer(mirror::setValue)
-                .setErrorSupplier(errorSupplier)
-                .build());
+                }).map(Collections::<AbstractConfigListEntry<?>>singletonList).orElse(null)
+        );
+        registerLeafEntryFunction(ConfigTypes.makeList(ConfigTypes.DOUBLE), (leaf, type, mirror, defaultValue, errorSupplier) ->
+                Collections.singletonList(configEntryBuilder.startDoubleList(getFieldNameKey(leaf.getName()), mirror.getValue())
+                        .setDefaultValue(defaultValue)
+                        .setExpanded(true)
+                        .setSaveConsumer(mirror::setValue)
+                        .setErrorSupplier(errorSupplier)
+                        .build()
+                ));
+        registerLeafEntryFunction(ConfigTypes.makeList(ConfigTypes.LONG), (leaf, type, mirror, defaultValue, errorSupplier) ->
+                Collections.singletonList(configEntryBuilder
+                        .startLongList(getFieldNameKey(leaf.getName()), mirror.getValue())
+                        .setDefaultValue(defaultValue)
+                        .setExpanded(true)
+                        .setSaveConsumer(mirror::setValue)
+                        .setErrorSupplier(errorSupplier)
+                        .build()
+                ));
+        registerLeafEntryFunction(ConfigTypes.makeList(ConfigTypes.INTEGER), (leaf, type, mirror, defaultValue, errorSupplier) ->
+                Collections.singletonList(configEntryBuilder
+                        .startIntList(getFieldNameKey(leaf.getName()), mirror.getValue())
+                        .setDefaultValue(defaultValue)
+                        .setExpanded(true)
+                        .setSaveConsumer(mirror::setValue)
+                        .setErrorSupplier(errorSupplier)
+                        .build()
+                ));
+        registerLeafEntryFunction(ConfigTypes.makeList(ConfigTypes.STRING), (leaf, type, mirror, defaultValue, errorSupplier) ->
+                Collections.singletonList(configEntryBuilder
+                        .startStrList(getFieldNameKey(leaf.getName()), mirror.getValue())
+                        .setDefaultValue(defaultValue)
+                        .setExpanded(true)
+                        .setSaveConsumer(mirror::setValue)
+                        .setErrorSupplier(errorSupplier)
+                        .build()
+                ));
     }
-
+    
     private String getFieldNameKey(String name) {
         return "config." + modId + "." + name;
     }
-
+    
     @Override
     public ConfigBranch getConfigRoot() {
         return root;
@@ -348,7 +394,7 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
         try {
             ConfigBuilder builder = ConfigBuilder.create().setTitle(getTitle()).setParentScreen(getParentScreen());
             transformNode(builder, getConfigRoot());
-            getConfigRoot().getAttributeValue(ClothAttributes.DEFAULT_BACKGROUND, IDENTIFIER_TYPE).ifPresent(builder::setDefaultBackgroundTexture);
+            getConfigRoot().getAttributeValue(ClothAttributes.DEFAULT_BACKGROUND, DefaultTypes.IDENTIFIER_TYPE).ifPresent(builder::setDefaultBackgroundTexture);
             getConfigRoot().getAttributeValue(ClothAttributes.TRANSPARENT_BACKGROUND, ConfigTypes.BOOLEAN).ifPresent(builder::setTransparentBackground);
             String defaultS = defaultCategoryBranch == root ? getDefaultCategoryKey() : getFieldNameKey(defaultCategoryBranch.getName());
             if (builder.hasCategory(defaultS)) {
@@ -361,7 +407,7 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
                         public boolean isSuccessful() {
                             return false;
                         }
-
+                        
                         @Override
                         public Screen getScreen() {
                             return null;
@@ -415,7 +461,7 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
                 if (branch.getAttributeValue(ClothAttributes.GROUP_DISPLAY, GroupDisplayOption.TYPE).orElse(GroupDisplayOption.DEFAULT).isCategoryCandidate()) {
                     String categoryKey = getFieldNameKey(branch.getName());
                     if (builder.hasCategory(categoryKey)) {
-                        throw new IllegalStateException("Duplicate category "+ categoryKey);
+                        throw new IllegalStateException("Duplicate category " + categoryKey);
                     }
                     category = getOrCreateCategory(builder, categoryKey, branch);
                     entries = transformNodeFirstLayer(branch.getName(), branch);
@@ -429,13 +475,13 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
             entries.forEach(category::addEntry);
         }
     }
-
+    
     private ConfigCategory getOrCreateCategory(ConfigBuilder builder, String key, ConfigNode node) {
         ConfigCategory defaultCategory = builder.getOrCreateCategory(key);
-        node.getAttributeValue(ClothAttributes.CATEGORY_BACKGROUND, IDENTIFIER_TYPE).ifPresent(defaultCategory::setCategoryBackground);
+        node.getAttributeValue(ClothAttributes.CATEGORY_BACKGROUND, DefaultTypes.IDENTIFIER_TYPE).ifPresent(defaultCategory::setCategoryBackground);
         return defaultCategory;
     }
-
+    
     private List<AbstractConfigListEntry<?>> transformNodeFirstLayer(String categoryName, ConfigBranch configNode) {
         List<AbstractConfigListEntry<?>> category = new ArrayList<>(configNode.getItems().size());
         for (ConfigNode item : configNode.getItems()) {
@@ -455,7 +501,7 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
     @SuppressWarnings("rawtypes")
     private List<AbstractConfigListEntry> transformNodeSecondLayer(String categoryName, ConfigBranch nestedNode) {
         List<AbstractConfigListEntry<?>> entries = new ArrayList<>(nestedNode.getItems().size());
-        for(ConfigNode item : nestedNode.getItems()) {
+        for (ConfigNode item : nestedNode.getItems()) {
             if (nodeEntryMap.containsKey(item)) {
                 appendEntries(entries, nestedNode, nodeEntryMap.get(item));
             } else if (item instanceof ConfigLeaf<?>) {
@@ -469,7 +515,7 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
         @SuppressWarnings("unchecked") List<AbstractConfigListEntry> ret = (List<AbstractConfigListEntry>) (List<?>) entries;
         return ret;
     }
-
+    
     private List<AbstractConfigListEntry<?>> appendSubCategory(String categoryName, List<AbstractConfigListEntry<?>> entries, ConfigBranch nestedNode) {
         String subCategoryName = (categoryName == null ? "" : (categoryName + ".")) + nestedNode.getName();
         GroupDisplayOption groupDisplayOption = nestedNode.getAttributeValue(ClothAttributes.GROUP_DISPLAY, GroupDisplayOption.TYPE).orElse(GroupDisplayOption.DEFAULT);
@@ -485,7 +531,7 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
         }
         return entries;
     }
-
+    
     private <T extends ConfigNode> List<AbstractConfigListEntry<?>> appendEntries(List<AbstractConfigListEntry<?>> category, T value, Function<T, List<AbstractConfigListEntry<?>>> factory) {
         if (factory != null && !value.getAttributeValue(ClothAttributes.EXCLUDED, ConfigTypes.BOOLEAN).orElse(false)) {
             List<AbstractConfigListEntry<?>> entries = factory.apply(value);
@@ -512,7 +558,7 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
         }
         return category;
     }
-
+    
     private void addPrefixText(List<AbstractConfigListEntry<?>> entries, ConfigNode value, String baseTranslationKey) {
         value.getAttributeValue(ClothAttributes.PREFIX_TEXT, ConfigTypes.STRING)
                 .map(key -> key.isEmpty() ? baseTranslationKey + "@PrefixText" : key)

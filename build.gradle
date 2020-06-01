@@ -3,6 +3,7 @@ plugins {
     id 'maven-publish'
     id 'maven'
     id 'signing'
+    id 'net.minecrell.licenser' version '0.4.1'
     id 'com.jfrog.bintray' version '1.8.4'
     id 'com.matthewprenger.cursegradle' version '1.4.0'
 }
@@ -13,6 +14,11 @@ targetCompatibility = JavaVersion.VERSION_1_8
 archivesBaseName = project.archives_base_name
 version = project.mod_version
 group = project.maven_group
+
+license {
+    header rootProject.file('LICENSE')
+    include '**/*.java'
+}
 
 minecraft {
 }

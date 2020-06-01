@@ -25,27 +25,17 @@
  * For more information, please refer to <http://unlicense.org>
  */
 
-package me.shedaniel.fiber2cloth.impl;
+package me.shedaniel.fiber2cloth.api;
 
 import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.derived.ConfigTypes;
-import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.derived.EnumConfigType;
+import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.derived.StringConfigType;
+import net.minecraft.util.Identifier;
 
-public enum GroupDisplayOption {
-    DEFAULT,
-    TRANSITIVE,
-    COLLAPSIBLE,
-    COLLAPSIBLE_EXPANDED;
+public final class DefaultTypes {
+    public static final StringConfigType<Identifier> IDENTIFIER_TYPE = ConfigTypes.STRING
+            .withPattern("(?>[a-z0-9_.-]+:)?[a-z0-9/._-]+")
+            .derive(Identifier.class, Identifier::new, Identifier::toString);
     
-    public static final EnumConfigType<GroupDisplayOption> TYPE = ConfigTypes.makeEnum(GroupDisplayOption.class);
-    
-    public boolean isTransitive() {
-        return this == TRANSITIVE;
-    }
-    
-    /**
-     * @return {@code true} if a group with this display option can be represented as a top-level category
-     */
-    public boolean isCategoryCandidate() {
-        return this == DEFAULT;
+    private DefaultTypes() {
     }
 }
