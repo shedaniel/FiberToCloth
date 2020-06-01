@@ -1,14 +1,24 @@
 package me.shedaniel.fiber2cloth;
 
+import blue.endless.jankson.Comment;
+import io.github.fablabsmc.fablabs.api.fiber.v1.annotation.AnnotatedSettings;
+import io.github.fablabsmc.fablabs.api.fiber.v1.annotation.Setting;
+import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.derived.ConfigTypes;
+import io.github.fablabsmc.fablabs.api.fiber.v1.tree.ConfigBranch;
+import io.github.fablabsmc.fablabs.api.fiber.v1.tree.ConfigTree;
+import io.github.prospector.modmenu.api.ConfigScreenFactory;
 import io.github.prospector.modmenu.api.ModMenuApi;
+import me.shedaniel.fiber2cloth.api.ClothAttributes;
+import me.shedaniel.fiber2cloth.api.ClothSetting;
 import me.shedaniel.fiber2cloth.api.Fiber2Cloth;
-import me.zeroeightsix.fiber.exception.FiberException;
-import me.zeroeightsix.fiber.tree.ConfigNode;
-import me.zeroeightsix.fiber.tree.ConfigValue;
-import me.zeroeightsix.fiber.tree.Node;
-import net.minecraft.client.gui.screen.Screen;
+import me.shedaniel.fiber2cloth.impl.Fiber2ClothImpl;
+import net.minecraft.block.Blocks;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.registry.Registry;
+import net.minecraft.world.Difficulty;
 
-import java.util.function.Function;
+import java.util.Arrays;
+import java.util.Collections;
 
 public class ModMenuCompat implements ModMenuApi {
     @Override
@@ -17,50 +27,102 @@ public class ModMenuCompat implements ModMenuApi {
     }
     
     @Override
-    public Function<Screen, ? extends Screen> getConfigScreenFactory() {
-        ConfigNode node = new ConfigNode();
-        Node secondCategory = null;
-        try {
-            secondCategory = node.fork("second.category");
-            ConfigValue<Integer> basicIntField = ConfigValue.builder(Integer.class)
-                    .withName("basicIntField")
-                    .withComment("This field will accept 0 - 100.")
-                    .withParent(node)
-                    .withDefaultValue(100)
-                    .constraints()
-                    .atLeast(0)
-                    .atMost(100)
-                    .finish()
+    public ConfigScreenFactory<?> getModConfigScreenFactory() {
+        return screen -> {
+            ConfigBranch cfg = ConfigTree.builder()
+                    .withAttribute(ClothAttributes.transparentBackground())
+                    .withAttribute(ClothAttributes.defaultBackground("minecraft:textures/block/oak_planks.png"))
+                    .applyFromPojo(new Pojo(),
+                            AnnotatedSettings.builder()
+                                    .registerTypeMapping(Identifier.class, Fiber2ClothImpl.IDENTIFIER_TYPE)
+                                    .apply(Fiber2Cloth::configure)
+                                    .build())
+                    .fork("second.category")
+                    .withAttribute(ClothAttributes.categoryBackground("minecraft:textures/block/stone.png"))
+                    .withValue("nestedExample", ConfigTypes.STRING, "Hi")
+                    .fork("i.am.inside")
+                    .fork("i.am.inside.but.hidden")
+                    .withAttribute(ClothAttributes.transitive())
+                    .withAttribute(ClothAttributes.tooltip())
+                    .withValue("transitiveExample", ConfigTypes.makeList(ConfigTypes.DOUBLE), Collections.emptyList())
+                    .finishBranch()
+                    .beginValue("nestedNestedExample", ConfigTypes.BOOLEAN, false)
+                    .withComment("This comment is overridden by the tooltip")
+                    .withAttribute(ClothAttributes.tooltip("config.fiber2cloth.nestedNestedExample.tooltip"))
+                    .finishValue()
+                    .beginValue("nestedNestedList", ConfigTypes.makeList(ConfigTypes.STRING), Arrays.asList("hi", "no"))
+                    .withAttribute(ClothAttributes.prefixText("config.fiber2cloth.nestedNestedList.description"))
+                    .finishValue()
+                    .fork("lol")
+                    .withValue("exampleBool", ConfigTypes.BOOLEAN, false)
+                    .finishBranch()
+                    .finishBranch()
+                    .finishBranch()
                     .build();
-            ConfigValue<String> nestedExample = ConfigValue.builder(String.class)
-                    .withName("nestedExample")
-                    .withParent(secondCategory)
-                    .withDefaultValue("Hi")
-                    .build();
-            Node iAmInside = secondCategory.fork("i.am.inside");
-            ConfigValue<Boolean> nestedNestedExample = ConfigValue.builder(Boolean.class)
-                    .withName("nestedNestedExample")
-                    .withParent(iAmInside)
-                    .withComment("I am inside lol wot u doing")
-                    .withDefaultValue(false)
-                    .build();
-            ConfigValue<String[]> nestedNestedList = ConfigValue.builder(String[].class)
-                    .withName("nestedNestedList")
-                    .withParent(iAmInside)
-                    .withDefaultValue(new String[]{"hi", "no"})
-                    .build();
-            Node lol = iAmInside.fork("lol");
-            ConfigValue<Boolean> exampleBool = ConfigValue.builder(Boolean.class)
-                    .withName("exampleBool")
-                    .withParent(lol)
-                    .withDefaultValue(false)
-                    .build();
-        } catch (FiberException e) {
-            e.printStackTrace();
+            ConfigBranch secondCategory = (ConfigBranch) cfg.lookup("second.category");
+            return Fiber2Cloth.create(screen, getModId(), cfg, "Fiber2Cloth Example Config").setDefaultCategoryBranch(secondCategory).setSaveRunnable(() -> {
+                // Here you should serialise the node into the config file.
+            }).build().getScreen();
+        };
+    }
+
+    @SuppressWarnings("unused")
+    private static class Pojo {
+
+        // adding a field directly to the root will cause it to be added to a "default" category
+        @Setting.Constrain.Range(min = 0, max = 100)
+        @Setting(comment = "This field will accept 0 - 100.")
+        public int basicIntField = 100;
+
+        @ClothSetting.EnumHandler(ClothSetting.EnumHandler.EnumDisplayOption.DROPDOWN)
+        public SecondCategory.Choice doYouLikeShulkers = SecondCategory.Choice.IDK;
+
+        @Setting.Group
+        @ClothSetting.PrefixText
+        @ClothSetting.CollapsibleObject
+        public FirstCategory collapsibleCategory = new FirstCategory();
+
+        @Setting.Group
+        @ClothSetting.PrefixText
+        @ClothSetting.TransitiveObject
+        public SecondCategory inlineCategory = new SecondCategory();
+
+        @Setting.Group
+        @ClothSetting.CategoryBackground("minecraft:textures/block/bricks.png")
+        public FirstCategory firstPojoCategory = new FirstCategory();
+
+        @Setting.Group
+        public SecondCategory secondPojoCategory = new SecondCategory();
+
+        private static class FirstCategory {
+            public Identifier[] ids = new Identifier[] {
+                    new Identifier("minecraft:diamond"),
+                    new Identifier("fabric:bike_shed")
+            };
+
+            @Comment("Your favourite block in the game")
+            @ClothSetting.RegistryInput("block")
+            public Identifier favouriteBlock = Registry.BLOCK.getId(Blocks.COARSE_DIRT);
+
+            @ClothSetting.ColorPicker(alpha = false)
+            public int favouriteColor = 0xFF0000;
         }
-        Node finalSecondCategory = secondCategory;
-        return screen -> Fiber2Cloth.create(screen, getModId(), node, "Fiber2Cloth Example Config").setDefaultCategoryNode(finalSecondCategory).setSaveRunnable(() -> {
-            // Here you should serialise the node into the config file.
-        }).build().getScreen();
+
+        private static class SecondCategory {
+            @ClothSetting.Slider
+            @Setting.Constrain.Range(min = 0.1, max = 1, step = 0.1)
+            public float percentage = 0.5f;
+
+            @ClothSetting.RequiresRestart
+            @ClothSetting.EnumHandler(ClothSetting.EnumHandler.EnumDisplayOption.SUGGESTION_INPUT)
+            public Choice yes = Choice.NO;
+
+            @ClothSetting.EnumHandler(ClothSetting.EnumHandler.EnumDisplayOption.BUTTON)
+            public Difficulty difficulty = Difficulty.HARD;
+
+            enum Choice {
+                YES, NO, IDK
+            }
+        }
     }
 }
