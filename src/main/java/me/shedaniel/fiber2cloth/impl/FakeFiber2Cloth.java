@@ -37,6 +37,8 @@ import me.shedaniel.clothconfig2.api.AbstractConfigListEntry;
 import me.shedaniel.fiber2cloth.api.Fiber2Cloth;
 import me.shedaniel.fiber2cloth.api.GuiEntryProvider;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.text.Text;
+import net.minecraft.text.TranslatableText;
 
 import java.util.List;
 import java.util.Map;
@@ -46,11 +48,11 @@ import java.util.function.Function;
 public class FakeFiber2Cloth implements Fiber2Cloth {
     
     private final Screen parentScreen;
-    private final String title;
+    private final Text title;
     private final ConfigBranch node;
     
     @Deprecated
-    public FakeFiber2Cloth(Screen parentScreen, ConfigBranch node, String title) {
+    public FakeFiber2Cloth(Screen parentScreen, ConfigBranch node, Text title) {
         this.parentScreen = parentScreen;
         this.node = node;
         this.title = title;
@@ -107,23 +109,23 @@ public class FakeFiber2Cloth implements Fiber2Cloth {
     }
     
     @Override
-    public String getDefaultCategoryKey() {
-        return "config.fiber2cloth.default.category";
+    public Text getDefaultCategory() {
+        return new TranslatableText("config.fiber2cloth.default.category");
     }
     
     @Override
-    public Fiber2Cloth setDefaultCategoryKey(String key) {
+    public Fiber2Cloth setDefaultCategory(Text key) {
         return this;
     }
     
     @Override
-    public String getTitle() {
+    public Text getTitleText() {
         return title;
     }
     
     @Override
-    public Fiber2Cloth setTitle(String title) {
-        return this;
+    public Fiber2Cloth setTitleText(Text title) {
+        return null;
     }
     
     @Override

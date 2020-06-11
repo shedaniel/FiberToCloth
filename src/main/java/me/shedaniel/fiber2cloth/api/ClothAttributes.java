@@ -109,7 +109,8 @@ public final class ClothAttributes {
     public static final FiberId REQUIRES_RESTART = id("requires_restart");
     
     public static ConfigAttribute<String> registryInput(MutableRegistry<?> registry) {
-        Identifier registryId = Registry.REGISTRIES.getId(registry);
+        @SuppressWarnings("rawtypes")
+        Identifier registryId = ((Registry) Registry.REGISTRIES).getId(registry);
         if (registryId == null) throw new IllegalArgumentException("Unregistered registry " + registry);
         return registryInput(registryId);
     }
