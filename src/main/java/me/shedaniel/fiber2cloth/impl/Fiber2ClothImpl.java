@@ -310,7 +310,8 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
                     } else if (registry == Registry.ITEM) {
                         topCellElement = DropdownMenuBuilder.TopCellElementBuilder.ofItemIdentifier(Registry.ITEM.get(mirror.getValue()));
                     } else {
-                        topCellElement = DropdownMenuBuilder.TopCellElementBuilder.of(mirror.getValue(), s -> Optional.ofNullable(Identifier.tryParse(s)).filter(registry::containsId).orElse(null));
+                        //noinspection Convert2MethodRef
+                        topCellElement = DropdownMenuBuilder.TopCellElementBuilder.of(mirror.getValue(), s -> Optional.ofNullable(Identifier.tryParse(s)).filter(identifier -> registry.containsId(identifier)).orElse(null));
                     }
                     return configEntryBuilder
                             .startDropdownMenu(getFieldNameKey(leaf.getName()), topCellElement)
