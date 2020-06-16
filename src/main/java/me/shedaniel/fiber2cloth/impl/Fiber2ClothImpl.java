@@ -276,12 +276,18 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
             @SuppressWarnings("unchecked") ConfigLeaf<String> leaf = ((ConfigLeaf<String>) node);
             EnumSerializableType type = (EnumSerializableType) leaf.getConfigType();
             ClothSetting.EnumHandler.EnumDisplayOption displayOption = leaf.getAttributeValue(ClothAttributes.SUGGESTION_ENUM, ENUM_DISPLAY_TYPE).orElse(ClothSetting.EnumHandler.EnumDisplayOption.BUTTON);
+            String key = getFieldNameKey(leaf.getName()).getString();
             if (displayOption == ClothSetting.EnumHandler.EnumDisplayOption.BUTTON) {
                 return Collections.singletonList(configEntryBuilder
                         .startSelector(getFieldNameKey(leaf.getName()), type.getValidValues().toArray(new String[0]), leaf.getValue())
                         .setDefaultValue(leaf.getDefaultValue())
                         .setSaveConsumer(leaf::setValue)
                         .setErrorSupplier(v -> error(type, v))
+                        .setNameProvider((name) -> {
+                            if (I18n.hasTranslation(key + ".enum." + name))
+                                return new TranslatableText(key + ".enum." + name);
+                            return new LiteralText(name);
+                        })
                         .build()
                 );
             } else {

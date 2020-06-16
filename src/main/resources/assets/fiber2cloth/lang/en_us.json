@@ -26,5 +26,6 @@
   "config.fiber2cloth.yes": "Useful Input for a Simple Choice",
   "config.fiber2cloth.favouriteBlock": "My favorite block",
   "config.fiber2cloth.favouriteColor": "Your favorite color",
-  "config.fiber2cloth.doYouLikeShulkers": "Do you like Shulkers?"
+  "config.fiber2cloth.doYouLikeShulkers": "Do you like Shulkers?",
+  "config.fiber2cloth.difficulty.enum.EASY": "Ez Pz Lemon Squeezy"
 }
