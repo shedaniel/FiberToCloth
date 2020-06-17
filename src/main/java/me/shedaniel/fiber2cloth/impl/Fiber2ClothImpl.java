@@ -284,8 +284,8 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
                         .setSaveConsumer(leaf::setValue)
                         .setErrorSupplier(v -> error(type, v))
                         .setNameProvider((name) -> {
-                            if (I18n.hasTranslation(key + ".enum." + name))
-                                return new TranslatableText(key + ".enum." + name);
+                            if (I18n.hasTranslation(key + ".enum." + name.toLowerCase(Locale.ROOT)))
+                                return new TranslatableText(key + ".enum." + name.toLowerCase(Locale.ROOT));
                             return new LiteralText(name);
                         })
                         .build()
