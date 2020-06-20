@@ -276,7 +276,7 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
             @SuppressWarnings("unchecked") ConfigLeaf<String> leaf = ((ConfigLeaf<String>) node);
             EnumSerializableType type = (EnumSerializableType) leaf.getConfigType();
             ClothSetting.EnumHandler.EnumDisplayOption displayOption = leaf.getAttributeValue(ClothAttributes.SUGGESTION_ENUM, ENUM_DISPLAY_TYPE).orElse(ClothSetting.EnumHandler.EnumDisplayOption.BUTTON);
-            Text key = new LiteralText("config." + modId + "." + leaf.getName());
+            String key = new LiteralText("config." + modId + "." + leaf.getName()).getString();
             if (displayOption == ClothSetting.EnumHandler.EnumDisplayOption.BUTTON) {
                 return Collections.singletonList(configEntryBuilder
                         .startSelector(getFieldNameKey(leaf.getName()), type.getValidValues().toArray(new String[0]), leaf.getValue())
@@ -284,10 +284,11 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
                         .setSaveConsumer(leaf::setValue)
                         .setErrorSupplier(v -> error(type, v))
                         .setNameProvider(name -> {
-                            if (I18n.hasTranslation(key.getString() + ".enum." + name.toLowerCase(Locale.ROOT)))
-                                return new TranslatableText(key.getString() + ".enum." + name.toLowerCase(Locale.ROOT));
+                            if (I18n.hasTranslation(key + ".enum." + name.toLowerCase(Locale.ROOT)))
+                                return new TranslatableText(key + ".enum." + name.toLowerCase(Locale.ROOT));
                             return new LiteralText(name);
-                        }).build()
+                        })
+                        .build()
                 );
             } else {
                 return Collections.singletonList(configEntryBuilder
