@@ -552,7 +552,7 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
                     Optional<Text[]> tooltip;
                     if (rawTooltip.isPresent()) {
                         tooltip = rawTooltip
-                                .map(key -> key.isEmpty() ? entry.getFieldName() + "@Tooltip" : key)
+                                .map(key -> key.isEmpty() ? entry.getFieldName().getString() + "@Tooltip" : key)
                                 .map(Fiber2ClothImpl::gatherLocalizedLines)
                                 .map(strings -> strings.stream().map(LiteralText::new).collect(Collectors.toList()))
                                 .map(l -> l.toArray(new Text[0]));
