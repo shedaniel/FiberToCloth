@@ -258,9 +258,9 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
                 ).map(Collections::<AbstractConfigListEntry<?>>singletonList).orElse(null)
         );
         registerLeafEntryFunction(ConfigTypes.BOOLEAN, (leaf, type, mirror, defaultValue, errorSupplier) -> {
-            Text s = getFieldNameKey(leaf.getName());
+            String s = "config." + modId + "." + leaf.getName();
             return Collections.singletonList(configEntryBuilder
-                    .startBooleanToggle(s, mirror.getValue())
+                    .startBooleanToggle(getFieldNameKey(leaf.getName()), mirror.getValue())
                     .setDefaultValue(defaultValue)
                     .setSaveConsumer(mirror::setValue)
                     .setErrorSupplier(errorSupplier)
