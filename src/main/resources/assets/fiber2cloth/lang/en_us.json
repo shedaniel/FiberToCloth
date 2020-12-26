@@ -27,5 +27,9 @@
   "config.fiber2cloth.favouriteBlock": "My favorite block",
   "config.fiber2cloth.favouriteColor": "Your favorite color",
   "config.fiber2cloth.doYouLikeShulkers": "Do you like Shulkers?",
-  "config.fiber2cloth.difficulty.enum.easy": "Ez Pz Lemon Squeezy"
+  "config.fiber2cloth.difficulty": "Difficulty",
+  "config.fiber2cloth.difficulty.enum.peaceful": "Peaceful",
+  "config.fiber2cloth.difficulty.enum.easy": "Ez Pz Lemon Squeezy",
+  "config.fiber2cloth.difficulty.enum.normal": "Meh",
+  "config.fiber2cloth.difficulty.enum.hard": "Hard"
 }

@@ -276,7 +276,7 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
             @SuppressWarnings("unchecked") ConfigLeaf<String> leaf = ((ConfigLeaf<String>) node);
             EnumSerializableType type = (EnumSerializableType) leaf.getConfigType();
             ClothSetting.EnumHandler.EnumDisplayOption displayOption = leaf.getAttributeValue(ClothAttributes.SUGGESTION_ENUM, ENUM_DISPLAY_TYPE).orElse(ClothSetting.EnumHandler.EnumDisplayOption.BUTTON);
-            String key = getFieldNameKey(leaf.getName()).getString();
+            String key = "config." + modId + "." + leaf.getName();
             if (displayOption == ClothSetting.EnumHandler.EnumDisplayOption.BUTTON) {
                 return Collections.singletonList(configEntryBuilder
                         .startSelector(getFieldNameKey(leaf.getName()), type.getValidValues().toArray(new String[0]), leaf.getValue())
