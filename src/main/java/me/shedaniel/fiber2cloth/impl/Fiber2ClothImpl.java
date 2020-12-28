@@ -172,7 +172,7 @@ public class Fiber2ClothImpl implements Fiber2Cloth {
         };
         functionMap.merge(cls, f, (f1, f2) -> v -> {
             List<AbstractConfigListEntry<?>> res = f2.apply(v);
-            return res == null ? f1.apply(v) : res;
+            return res == null || res.isEmpty() ? f1.apply(v) : res;
         });
         return this;
     }
