@@ -28,13 +28,13 @@
 package me.shedaniel.fiber2cloth;
 
 import blue.endless.jankson.Comment;
+import com.terraformersmc.modmenu.api.ConfigScreenFactory;
+import com.terraformersmc.modmenu.api.ModMenuApi;
 import io.github.fablabsmc.fablabs.api.fiber.v1.annotation.AnnotatedSettings;
 import io.github.fablabsmc.fablabs.api.fiber.v1.annotation.Setting;
 import io.github.fablabsmc.fablabs.api.fiber.v1.schema.type.derived.ConfigTypes;
 import io.github.fablabsmc.fablabs.api.fiber.v1.tree.ConfigBranch;
 import io.github.fablabsmc.fablabs.api.fiber.v1.tree.ConfigTree;
-import io.github.prospector.modmenu.api.ConfigScreenFactory;
-import io.github.prospector.modmenu.api.ModMenuApi;
 import me.shedaniel.fiber2cloth.api.ClothAttributes;
 import me.shedaniel.fiber2cloth.api.ClothSetting;
 import me.shedaniel.fiber2cloth.api.DefaultTypes;
@@ -48,12 +48,6 @@ import java.util.Arrays;
 import java.util.Collections;
 
 public class ModMenuCompat implements ModMenuApi {
-    @Override
-    public String getModId() {
-        return "fiber2cloth";
-    }
-    
-    @Override
     public ConfigScreenFactory<?> getModConfigScreenFactory() {
         return screen -> {
             ConfigBranch cfg = ConfigTree.builder()
@@ -87,7 +81,7 @@ public class ModMenuCompat implements ModMenuApi {
                     .finishBranch()
                     .build();
             ConfigBranch secondCategory = (ConfigBranch) cfg.lookup("second.category");
-            return Fiber2Cloth.create(screen, getModId(), cfg, "Fiber2Cloth Example Config").setDefaultCategoryBranch(secondCategory).setSaveRunnable(() -> {
+            return Fiber2Cloth.create(screen, "fiber2cloth", cfg, "Fiber2Cloth Example Config").setDefaultCategoryBranch(secondCategory).setSaveRunnable(() -> {
                 // Here you should serialise the node into the config file.
             }).build().getScreen();
         };
