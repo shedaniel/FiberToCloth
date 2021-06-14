@@ -1,9 +1,7 @@
 plugins {
     id 'fabric-loom' version '0.7-SNAPSHOT'
     id 'maven-publish'
-    id 'signing'
     id 'org.cadixdev.licenser' version '0.6.0'
-    id 'com.jfrog.bintray' version '1.8.4'
     id 'com.matthewprenger.cursegradle' version '1.4.0'
 }
 
@@ -73,32 +71,6 @@ tasks.withType(JavaCompile) {
 
 jar {
     from "LICENSE"
-}
-
-bintray {
-    user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
-    key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_KEY')
-    publications = ["MyPublication"]
-    publish = true
-    pkg {
-        repo = "fiber2cloth"
-        name = "fiber2cloth"
-        userOrg = "shedaniel"
-        licenses = ["Unlicense"]
-        version {
-            name = project.version
-            vcsTag = project.version
-            released = new Date()
-            desc = "Fiber 2 Cloth API for Minecraft"
-            githubRepo = 'shedaniel/FiberToCloth'
-            websiteUrl = 'https://github.com/shedaniel/FiberToCloth'
-            issueTrackerUrl = 'https://github.com/shedaniel/FiberToCloth/issues'
-            vcsUrl = 'https://github.com/shedaniel/FiberToCloth.git'
-            gpg {
-                sign = true
-            }
-        }
-    }
 }
 
 curseforge {
@@ -185,7 +157,14 @@ publishing {
 
     // select the repositories you want to publish to
     repositories {
-        // uncomment to publish to the local maven
-        // mavenLocal()
+        if (System.getenv("MAVEN_PASS") != null) {
+            maven {
+                url = "https://deploy.shedaniel.me/"
+                credentials {
+                    username = "shedaniel"
+                    password = System.getenv("MAVEN_PASS")
+                }
+            }
+        }
     }
 }

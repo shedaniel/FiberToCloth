@@ -15,6 +15,5 @@ jobs:
       - name: Upload to Bintray & CurseForge
         run: ./gradlew clean bintrayUpload curseforge
         env:
-          BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
-          BINTRAY_KEY: ${{ secrets.BINTRAY_KEY }}
+          MAVEN_PASS: ${{ secrets.MAVEN_PASS }}
           CF_API_KEY: ${{ secrets.CF_API_KEY }}
