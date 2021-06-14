@@ -13,7 +13,7 @@ jobs:
         with:
           java-version: 1.8
       - name: Upload to Bintray & CurseForge
-        run: ./gradlew clean bintrayUpload curseforge
+        run: ./gradlew clean publish curseforge
         env:
           MAVEN_PASS: ${{ secrets.MAVEN_PASS }}
           CF_API_KEY: ${{ secrets.CF_API_KEY }}
