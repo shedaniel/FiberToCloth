@@ -1,9 +1,8 @@
 plugins {
-    id 'fabric-loom' version '0.4-SNAPSHOT'
+    id 'fabric-loom' version '0.7-SNAPSHOT'
     id 'maven-publish'
-    id 'maven'
     id 'signing'
-    id 'net.minecrell.licenser' version '0.4.1'
+    id 'org.cadixdev.licenser' version '0.6.0'
     id 'com.jfrog.bintray' version '1.8.4'
     id 'com.matthewprenger.cursegradle' version '1.4.0'
 }
@@ -21,7 +20,19 @@ license {
 }
 
 repositories {
-    maven { url "https://dl.bintray.com/shedaniel/legacy-yarn-updated" }
+    maven {
+        url = "https://maven.shedaniel.me/"
+        content {
+            includeGroupByRegex 'me\\.shedaniel\\..*'
+            includeGroup 'me.sargunvohra.mcmods'
+        }
+    }
+    maven {
+        url = 'https://maven.terraformersmc.com/releases'
+        content {
+            includeGroup 'com.terraformersmc'
+        }
+    }
 }
 
 minecraft {
@@ -30,15 +41,15 @@ minecraft {
 dependencies {
     //to change the versions see the gradle.properties file
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings "me.shedaniel:legacy-yarn:${project.yarn_mappings}:v2"
+    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
     modApi "net.fabricmc:fabric-loader:${project.loader_version}"
 
     // Fabric API. This is technically optional, but you probably want it anyway.
     modApi "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-    modApi ("me.shedaniel.cloth:config-2:${cloth_version}") {
-        exclude group: "net.fabricmc.fabric-api"
+    modApi ("me.shedaniel.cloth:cloth-config-fabric:${cloth_version}") {
+        exclude(group: "net.fabricmc.fabric-api")
     }
-    modImplementation ("io.github.prospector:modmenu:1.12.0+build.14")
+    modImplementation "com.terraformersmc:modmenu:${project.modmenu_version}"
     modApi "me.zeroeightsix:fiber:${project.fiber_version}"
 
     // PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
@@ -48,13 +59,8 @@ dependencies {
 processResources {
     inputs.property "version", project.version
 
-    from(sourceSets.main.resources.srcDirs) {
-        include "fabric.mod.json"
+    filesMatching("fabric.mod.json") {
         expand "version": project.version
-    }
-
-    from(sourceSets.main.resources.srcDirs) {
-        exclude "fabric.mod.json"
     }
 }
 
